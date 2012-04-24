@@ -11,7 +11,7 @@ GAPIT <- function(Y=NULL,G=NULL,GD=NULL,GM=NULL,KI=NULL,Z=NULL,CV=NULL,GP=NULL,G
                 LD.chromosome=NULL,LD.location=NULL,LD.range=NULL,
                 sangwich.top=NULL,sangwich.bottom=NULL,QC=TRUE,GTindex=NULL,LD=0.01,
                 file.output=TRUE,cutOff=0.01, Model.selection = FALSE,output.numerical = FALSE,output.hapmap = FALSE){
-GAPIT.Version="2.17 (Qishan optimized FasT-LMM)"
+GAPIT.Version="2.18 (Separation of Cryptic relationship from population structure)"
 #Object: To perform GWAS and GPS (Genomic Prediction/Selection)
 #Designed by Zhiwu Zhang
 #Writen by Alex Lipka, Feng Tian and Zhiwu Zhang
@@ -44,8 +44,8 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="Genotype for all")
 KI=myGenotype$KI
 PC=myGenotype$PC
 
-
-
+print("debug pc")
+print(dim(PC))
 
 
 
@@ -73,7 +73,7 @@ if(output.numerical) write.table(GD,  "GAPIT.Genotype.Numerical.txt", quote = FA
 if(output.hapmap) write.table(myGenotype$G,  "GAPIT.Genotype.hmp.txt", quote = FALSE, sep = "\t", row.names = FALSE,col.names = FALSE)
 
 #In case of null Y and null GP, return genotype only  
-if(is.null(Y) & is.null(GP)) return (list(GWAS=NULL,GPS=NULL,compression=NULL,kinship.optimum=NULL,kinship=myGenotype$KI,PCA=myGenotype$PC,GD=cbind(GT,GD),G=myGenotype$G))
+if(is.null(Y) & is.null(GP)) return (list(GWAS=NULL,GPS=NULL,compression=NULL,kinship.optimum=NULL,kinship=myGenotype$KI,PCA=myGenotype$PC,GD=data.frame(cbind(GT,GD)),GI=GI,G=myGenotype$G))
 
 #In case of null Y, return genotype only          
 if(is.null(Y)) return (list(GWAS=NULL,GPS=NULL,compression=NULL,kinship.optimum=NULL,kinship=myGenotype$KI,PCA=myGenotype$PC,GD=cbind(GT,GD),G=myGenotype$G))
@@ -933,15 +933,6 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="Extract bread results")
 
   
 }
-print("debug begining")
-print(length(GI))  
-print(length(ps))  
-print(length(maf))  
-print(length(nobs))
-print(length(rsquare_base))
-print(length(rsquare))  
-print("debug end")
-
 
 #Export BLUP and PEV
 if(!byPass &file.output) 
@@ -958,13 +949,6 @@ if(byPass)
 }
 if(byPass)Compression[1,4]=0 #create a fake value to aloow output of SUPER 
 
-
-print("debug begining 1")
-print((hasGenotype))  
-print((Compression[1,4]))  
- 
-print("debug end1")
-  
 #Export GWAS results
 if(hasGenotype &SNP.test &!is.na(Compression[1,4]))     #require not NA REML 
 {
@@ -1016,12 +1000,6 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="Manhattan plot")
   print("Association table..." )
   #GAPIT.Table(final.table = PWIP$PWIP, name.of.trait = name.of.trait,SNP.FDR=SNP.FDR)
   GWAS=PWIP$PWIP[PWIP$PWIP[,9]<=SNP.FDR,]
-
-print("debug begining 2")
-print(dim(GWAS))  
-print("debug end 2")
-
-
 
   if(file.output) write.table(GWAS, paste("GAPIT.", name.of.trait, ".GWAS.Results.csv", sep = ""), quote = FALSE, sep = ",", row.names = FALSE,col.names = TRUE)
 
@@ -1108,13 +1086,6 @@ if(!is.null(K)) eig.L <- emma.eigen.L(Z, K) #this function handle both NULL Z an
 
 Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="eig.L")
 Memory=GAPIT.Memory(Memory=Memory,Infor="eig.L")
-
-#print("debuge")
-#print(labels(eig.L))
-#print(dim((eig.L$values))
-#printdim((eig.L$vectors))
-#stop("sdgdfg")
-
 
 #decomposation with fixed effect (SNP not included)
 #print("Calling emma.eigen.R.w.Z...")
@@ -2812,11 +2783,7 @@ GI.MP <- GI.MP[!is.na(GI.MP[,2]),]
 GI.MP <- GI.MP[GI.MP[,3]>0,]
 numMarker=nrow(GI.MP)
 bonferroniCutOff=-log10(cutOff/numMarker)
-
-print("debug for plot")
-print(numMarker)
-print(bonferroniCutOff)
-  	
+	
 #Replace P the -log10 of the P-values
 GI.MP[,3] <-  -log10(GI.MP[,3])
 y.lim <- ceiling(max(GI.MP[,3]))
@@ -3435,10 +3402,12 @@ GAPIT.PCA <- function(X,taxa, PC.number = min(ncol(X),nrow(X)),file.output=TRUE)
 ############################################################################################## 
 
 #Conduct the PCA 
+print("Callingg prcomp...")
 PCA.X <- prcomp(X)
 
+print("Creating PCA graphs...")
 #Create a Scree plot 
-if(file.output) {
+if(file.output & PC.number>1) {
 pdf("GAPIT.PCA.eigenValue.pdf", width = 12, height = 12)
 par(mar = c(5,5,5,5))
 screeplot(PCA.X, type="lines")
@@ -3454,13 +3423,15 @@ plot(PCA.X$x[,i],PCA.X$x[,j],xlab=paste("PC",i,sep=""),ylab=paste("PC",j,sep="")
 dev.off()
 }
 
+print("Joining taxa...")
 #Extract number of PCs needed
-PCs <- cbind(taxa,as.data.frame(PCA.X$x[,1:PC.number]))
+PCs <- cbind(taxa,as.data.frame(PCA.X$x))
 
 #Remove duplicate (This is taken care by QC)
 #PCs.unique <- unique(PCs[,1])
 #PCs <-PCs[match(PCs.unique, PCs[,1], nomatch = 0), ]
 
+print("Exporting PCs...")
 #Write the PCs into a text file
 if(file.output) write.table(PCs, "GAPIT.PCA.csv", quote = FALSE, sep = ",", row.names = FALSE,col.names = TRUE)
 
@@ -4594,7 +4565,7 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="Genotype start")
 byData=!is.null(G) | !is.null(GD)
 byFile=!is.null(file.G) | !is.null(file.GD)
 hasGenotype=(byData | byFile  )
-needKinPC=(is.null(KI) | PCA.total>0)
+needKinPC=(is.null(KI) | PCA.total>0 | kinship.algorithm=="Separation")
 
 if(!is.null(KI) & !byData & !byFile & !SNP.test &kinship.algorithm!="SUPER") {
 print("It return unexpected")
@@ -4930,9 +4901,9 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="Before PCA")
 #Create PC
 PC=NULL
 thePCA=NULL
-if(PCA.total>0){
+if(PCA.total>0 | kinship.algorithm=="Separation"){
 thePCA=GAPIT.PCA(X = GD, taxa = GT, PC.number = PCA.total,file.output=file.output)
-PC=thePCA$PCs
+PC=thePCA$PCs[,1:(1+PCA.total)]
 Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="PCA")
 Memory=GAPIT.Memory(Memory=Memory,Infor="PCA")
 print("PC created")
@@ -4966,8 +4937,7 @@ if(is.null(KI) & (!is.null(GD) |!is.null(GK)) & kinship.algorithm!="SUPER")
   if(kinship.algorithm=="EMMA")theKin= emma.kinship(snps=t(as.matrix(.5*thisGD)), method="additive", use="all")
   if(kinship.algorithm=="Loiselle")theKin= GAPIT.kinship.loiselle(snps=t(as.matrix(.5*thisGD)), method="additive", use="all")
   if(kinship.algorithm=="VanRaden")theKin= GAPIT.kinship.VanRaden(snps=as.matrix(thisGD))
-  if(kinship.algorithm=="Separation" & PCA.total>0)theKin= GAPIT.kinship.separation(PCs=thePCA$PCs,EV=thePCA$EV,nPCs=PCA.total)
-
+  if(kinship.algorithm=="Separation")theKin= GAPIT.kinship.separation(PCs=thePCA$PCs,EV=thePCA$EV,nPCs=PCA.total)
   
   colnames(theKin)=myGT
   rownames(theKin)=myGT
@@ -5069,5 +5039,56 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="after LD plot")
 
 #print("Genotype successfully acomplished")
 return (list(G=G,GD=GD,GI=GI,GT=GT,hasGenotype=hasGenotype, genoFormat=genoFormat, KI=KI,PC=PC,byFile=byFile,fullGD=fullGD,Timmer=Timmer,Memory=Memory,SNP.QTN=SNP.QTN))
+}
+
+##############################################################################################
+GAPIT.kinship.separation <- function(PCs=NULL,EV=NULL,nPCs=0 ){
+#Object: To calculate kinship from PCS
+#       PCs: the principal component as columns and individual as rows, the first column is taxa
+#       EV: Eigen values
+#       nPCs: the number of front PCs excluded to calculate kinship
+#Output: kinship
+#Authors: Huihui Li and Zhiwu Zhang
+#Last update: April 17, 2012
+##############################################################################################
+
+print("Calling GAPIT.kinship.separation")  
+  Total.number.PCs=ncol(PCs)
+  n=nrow(PCs)
+
+  #Choose Total.number.PCs-nPCs PCs and EV to calculate K
+  sep.PCs=PCs[, (nPCs+2):Total.number.PCs]  #first column is taxa
+  sep.EV=EV[(nPCs+1):Total.number.PCs]
+
+  Weighted.sep.EV=sep.EV/sum(sep.EV)
+  
+  #X=t(t(sep.PCs)*Weighted.sep.EV)  
+  X=sep.PCs
+   
+  XMean= apply(X,2,mean)
+  X=as.matrix(X-XMean)
+  K=tcrossprod((X), (X))
+
+  #Extract diagonals
+  i =1:n
+  j=(i-1)*n
+  index=i+j
+  d=K[index]
+  DL=min(d)
+  DU=max(d)
+  floor=min(K)
+  
+  K=(K-floor)/(DL-floor)
+  MD=(DU-floor)/(DL-floor)
+     
+  if(is.na(K[1,1])) stop ("GAPIT says: Missing data is not allowed for numerical genotype data")
+  if(MD>2)K[index]=K[index]/(MD-1)+1
+print("debug K")
+print(dim(X))
+print(X[,1:5])
+print(dim(K))
+print(K[1:5,1:5])
+
+  return (K)
 }
 
