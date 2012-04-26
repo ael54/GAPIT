@@ -1,4 +1,8 @@
 GAPIT: Genome Association and Prediction Integrated Tool
 R files: The GAPIT functions
-gapit_functions.txt: The file containing all GAPIT functions
 GAPIT.Builder.bat: Script to build gapit_functions.txt from all R files
+gapit_functions.txt: The file containing all GAPIT functions. This file can be anchored at GAPIT website with source commend:
+source("http://www.maizegenetics.net/images/stories/bioinformatics/GAPIT/gapit_functions.txt")
+
+Help document, tutorial data and code are available:
+http://www.maizegenetics.net/gapit
