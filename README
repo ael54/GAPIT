@@ -1,1 +1,4 @@
-This is GAPIT in April of 2012.
+GAPIT: Genome Association and Prediction Integrated Tool
+R files: The GAPIT functions
+gapit_functions.txt: The file containing all GAPIT functions
+GAPIT.Builder.bat: Script to build gapit_functions.txt from all R files
