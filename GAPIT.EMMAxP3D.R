@@ -1,5 +1,5 @@
-##############################################################################################
-GAPIT.EMMAxP3D <- function(ys,xs,K=NULL,Z=NULL,X0=NULL,GI=NULL,GP=NULL,
+`GAPIT.EMMAxP3D` <-
+function(ys,xs,K=NULL,Z=NULL,X0=NULL,GI=NULL,GP=NULL,
 		file.path=NULL,file.from=NULL,file.to=NULL,file.total=1, genoFormat="Hapmap", file.fragment=NULL,byFile=FALSE,fullGD=TRUE,SNP.fraction=1,
     file.G=NULL,file.Ext.G=NULL,GTindex=NULL,file.GD=NULL, file.GM=NULL, file.Ext.GD=NULL,file.Ext.GM=NULL,
     SNP.P3D=TRUE,Timmer,Memory,optOnly=TRUE,SNP.effect="Add",SNP.impute="Middle", SNP.permutation=FALSE,
@@ -43,6 +43,7 @@ if(!is.null(K)) tv=ncol(K)
 #print("Caling emma.eigen.L...")
 if(!is.null(K)) eig.L <- emma.eigen.L(Z, K) #this function handle both NULL Z and non-NULL Z matrix
 
+eig.L$values[eig.L$values<0]=0
 Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="eig.L")
 Memory=GAPIT.Memory(Memory=Memory,Infor="eig.L")
 
@@ -63,6 +64,10 @@ if(is.null(Z)  & !is.null(K)) eig.R <- try(emma.eigen.R.wo.Z(   K, X)) #This wil
 Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="eig.R")
 Memory=GAPIT.Memory(Memory=Memory,Infor="eig.R")
 
+eig.R$values[eig.R$values<0]=0
+print(labels(eig.R))
+print(length(eig.R$values))
+print(dim(eig.R$vectors))
 #print("emma.eigen.R.w.Z called!!!")
 #Handler of error in emma
 
@@ -82,14 +87,14 @@ for (j in 1:g)
 
 if(optOnly){
 
-  #REMLE <- emma.REMLE(ys[j,], X, K, Z, ngrids, llim, ulim, esp, eig.R)
+  #REMLE <- GAPIT.emma.REMLE(ys[j,], X, K, Z, ngrids, llim, ulim, esp, eig.R)
   #vgs <- REMLE$vg
   #ves <- REMLE$ve
   #REMLs <- REMLE$REML
   #REMLE_delta=REMLE$delta
 
  if(!is.null(K)){
-  REMLE <- emma.REMLE(ys[j,], X, K, Z, ngrids, llim, ulim, esp, eig.R)
+  REMLE <- GAPIT.emma.REMLE(ys[j,], X, K, Z, ngrids, llim, ulim, esp, eig.R)
 
   Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="REML")
   Memory=GAPIT.Memory(Memory=Memory,Infor="REML")
@@ -195,7 +200,7 @@ Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Trait")
 Memory=GAPIT.Memory(Memory=Memory,Infor="Trait")
 
 if(!is.null(K)){
-  REMLE <- emma.REMLE(ys[j,], X, K, Z, ngrids, llim, ulim, esp, eig.R)
+  REMLE <- GAPIT.emma.REMLE(ys[j,], X, K, Z, ngrids, llim, ulim, esp, eig.R)
 
 Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="REML")
 Memory=GAPIT.Memory(Memory=Memory,Infor="REML")
@@ -494,8 +499,8 @@ for (i in loopStart:mloop){
       {
         if(!is.null(Z)) eig.R <- emma.eigen.R.w.Z(Z, K, X) #This will be used to get REstricted ML (REML)
         if(is.null(Z)) eig.R <- emma.eigen.R.wo.Z(   K, X) #This will be used to get REstricted ML (REML)
-        if(!is.null(Z)) REMLE <- emma.REMLE(ys[j,], X, K, Z, ngrids, llim, ulim, esp, eig.R)
-        if(is.null(Z)) REMLE <- emma.REMLE(ys[j,], X, K, Z = NULL, ngrids, llim, ulim, esp, eig.R)
+        if(!is.null(Z)) REMLE <- GAPIT.emma.REMLE(ys[j,], X, K, Z, ngrids, llim, ulim, esp, eig.R)
+        if(is.null(Z)) REMLE <- GAPIT.emma.REMLE(ys[j,], X, K, Z = NULL, ngrids, llim, ulim, esp, eig.R)
         if(!is.null(Z) & !is.null(K))  U <- eig.L$vectors * matrix(c(sqrt(1/(eig.L$values + REMLE$delta)),rep(sqrt(1/REMLE$delta),nr - tv)),nr,((nr-tv)+length(eig.L$values)),byrow=TRUE)
         if(is.null(Z) & !is.null(K))  U <- eig.L$vectors * matrix(  sqrt(1/(eig.L$values + REMLE$delta)),nr,length(eig.L$values),byrow=TRUE)
 

@@ -1,5 +1,5 @@
-##############################################################################################
-GAPIT.Main <- function(Y,G=NULL,GD=NULL,GM=NULL,KI=NULL,Z=NULL,CV=NULL,SNP.P3D=TRUE,GP=NULL,GK=NULL,
+`GAPIT.Main` <-
+function(Y,G=NULL,GD=NULL,GM=NULL,KI=NULL,Z=NULL,CV=NULL,SNP.P3D=TRUE,GP=NULL,GK=NULL,
                 group.from=1000000 ,group.to=1,group.by=10,kinship.cluster="average", kinship.group='Mean',kinship.algorithm=NULL,DPP=50000,
                	ngrid = 100, llin = -10, ulim = 10, esp = 1e-10,
                 file.path=NULL,file.from=NULL, file.to=NULL, file.total=NULL, file.fragment = 512, file.G=NULL, file.Ext.G=NULL,file.GD=NULL, file.GM=NULL, file.Ext.GD=NULL,file.Ext.GM=NULL,
