@@ -312,6 +312,7 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="Sampling genotype")
 
 #Plot thirt part kinship
 if(!is.null(KI) &file.output) {
+if(KI!=1) {
 
 
 
@@ -340,6 +341,7 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="plot heatmap")
 
     
   } #end of if(nrow(KI)<1000)
+} #end of if(KI!=1)
 } #end of if(!is.null(KI))
 
 Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Before SUPER")
