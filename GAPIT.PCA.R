@@ -20,8 +20,10 @@ dev.off()
 
 pdf("GAPIT.PCA.pdf", width = 12, height = 12)
 par(mar = c(5,5,5,5))
-for(i in 1:(as.numeric(PC.number[1])-1)){
-for(j in (i+1):(as.numeric(PC.number[1]))){
+maxPlot=min(as.numeric(PC.number[1]),3)
+
+for(i in 1:(maxPlot-1)){
+for(j in (i+1):(maxPlot)){
 plot(PCA.X$x[,i],PCA.X$x[,j],xlab=paste("PC",i,sep=""),ylab=paste("PC",j,sep=""),pch=1,col="red",cex=1.0,cex.lab=1.5, cex.axis=1.2, lwd=2,las=1)
 }
 }
