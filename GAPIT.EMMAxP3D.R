@@ -1,5 +1,5 @@
-`GAPIT.EMMAxP3D` <-
-function(ys,xs,K=NULL,Z=NULL,X0=NULL,GI=NULL,GP=NULL,
+##############################################################################################
+GAPIT.EMMAxP3D <- function(ys,xs,K=NULL,Z=NULL,X0=NULL,GI=NULL,GP=NULL,
 		file.path=NULL,file.from=NULL,file.to=NULL,file.total=1, genoFormat="Hapmap", file.fragment=NULL,byFile=FALSE,fullGD=TRUE,SNP.fraction=1,
     file.G=NULL,file.Ext.G=NULL,GTindex=NULL,file.GD=NULL, file.GM=NULL, file.Ext.GD=NULL,file.Ext.GM=NULL,
     SNP.P3D=TRUE,Timmer,Memory,optOnly=TRUE,SNP.effect="Add",SNP.impute="Middle", SNP.permutation=FALSE,
@@ -43,10 +43,15 @@ if(!is.null(K)) tv=ncol(K)
 #print("Caling emma.eigen.L...")
 if(!is.null(K)) eig.L <- emma.eigen.L(Z, K) #this function handle both NULL Z and non-NULL Z matrix
 
-eig.L$values[eig.L$values<0]=0
-
 Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="eig.L")
 Memory=GAPIT.Memory(Memory=Memory,Infor="eig.L")
+
+#print("debuge")
+#print(labels(eig.L))
+#print(dim((eig.L$values))
+#printdim((eig.L$vectors))
+#stop("sdgdfg")
+
 
 #decomposation with fixed effect (SNP not included)
 #print("Calling emma.eigen.R.w.Z...")
@@ -58,17 +63,12 @@ if(is.null(Z)  & !is.null(K)) eig.R <- try(emma.eigen.R.wo.Z(   K, X)) #This wil
 Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="eig.R")
 Memory=GAPIT.Memory(Memory=Memory,Infor="eig.R")
 
-eig.R$values[eig.R$values<0]=0
-print(labels(eig.R))
-print(length(eig.R$values))
-print(dim(eig.R$vectors))
-
 #print("emma.eigen.R.w.Z called!!!")
 #Handler of error in emma
 
 if(!is.null(K)){
 if(inherits(eig.R, "try-error"))
-       return(list(ps = NULL, REMLs = NA, stats = NULL, dfs = NULL,maf=NULL,nobs = NULL,Timmer=Timmer,Memory=Memory,
+       return(list(ps = NULL, REMLs = NA, stats = NULL, effect.est = NULL, dfs = NULL,maf=NULL,nobs = NULL,Timmer=Timmer,Memory=Memory,
         vgs = NA, ves = NA, BLUP = NULL, BLUP_Plus_Mean = NULL,
         PEV = NULL, BLUE=NULL))
 
@@ -82,14 +82,14 @@ for (j in 1:g)
 
 if(optOnly){
 
-  #REMLE <- GAPIT.emma.REMLE(ys[j,], X, K, Z, ngrids, llim, ulim, esp, eig.R)
+  #REMLE <- emma.REMLE(ys[j,], X, K, Z, ngrids, llim, ulim, esp, eig.R)
   #vgs <- REMLE$vg
   #ves <- REMLE$ve
   #REMLs <- REMLE$REML
   #REMLE_delta=REMLE$delta
 
  if(!is.null(K)){
-  REMLE <- GAPIT.emma.REMLE(ys[j,], X, K, Z, ngrids, llim, ulim, esp, eig.R)
+  REMLE <- emma.REMLE(ys[j,], X, K, Z, ngrids, llim, ulim, esp, eig.R)
 
   Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="REML")
   Memory=GAPIT.Memory(Memory=Memory,Infor="REML")
@@ -117,14 +117,15 @@ if(optOnly){
 
   if( !is.null(Z) & !is.null(K)) eig.full.plus.delta <- as.matrix(c((eig.L$values + REMLE_delta), rep(REMLE_delta,(nr - tv))))
   if( is.null(Z) & !is.null(K))  eig.full.plus.delta <- as.matrix((eig.L$values + REMLE_delta))
-  
+
+  if(!is.null(K)){
    if(length(which(eig.L$values < 0)) > 0 ){
     print("---------------------------------------------------The group kinship matrix at this compression level is not positive semidefinite. Please select another compression level.---------------------------------------------------")
            return(list(ps = NULL, REMLs = 999999, stats = NULL, effect.est = NULL, dfs = NULL,maf=NULL,nobs = NULL,Timmer=Timmer,Memory=Memory,
            vgs = 1.000, ves = 1.000, BLUP = NULL, BLUP_Plus_Mean = NULL,
            PEV = NULL, BLUE=NULL))
     }
-
+  }
   
 
   #Calculate the log likelihood function for the intercept only model
@@ -194,7 +195,7 @@ Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Trait")
 Memory=GAPIT.Memory(Memory=Memory,Infor="Trait")
 
 if(!is.null(K)){
-  REMLE <- GAPIT.emma.REMLE(ys[j,], X, K, Z, ngrids, llim, ulim, esp, eig.R)
+  REMLE <- emma.REMLE(ys[j,], X, K, Z, ngrids, llim, ulim, esp, eig.R)
 
 Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="REML")
 Memory=GAPIT.Memory(Memory=Memory,Infor="REML")
@@ -221,14 +222,16 @@ if( is.null(Z) & !is.null(K))  U <- eig.L$vectors * matrix(  sqrt(1/(eig.L$value
 if( !is.null(Z) & !is.null(K)) eig.full.plus.delta <- as.matrix(c((eig.L$values + REMLE_delta), rep(REMLE_delta,(nr - tv))))
 if( is.null(Z) & !is.null(K))  eig.full.plus.delta <- as.matrix((eig.L$values + REMLE_delta))
 
+
+
+if(!is.null(K)){
 if(length(which(eig.L$values < 0)) > 0 ){
  print("---------------------------------------------------The group kinship matrix at this compression level is not positive semidefinite. Please select anohter compression level.---------------------------------------------------")
        return(list(ps = NULL, REMLs = 999999, stats = NULL, effect.est = NULL, dfs = NULL,maf=NULL,nobs = NULL,Timmer=Timmer,Memory=Memory,
         vgs = 1.000, ves = 1.000, BLUP = NULL, BLUP_Plus_Mean = NULL,
         PEV = NULL, BLUE=NULL))
  }
-
-
+}
 
 
 Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="U Matrix")
@@ -339,6 +342,7 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="Before cleaning")
   #allocate spaces for SNPs
   rm(dfs)
   rm(stats)
+  rm(effect.est)
   rm(ps)
   rm(nobs)
   rm(maf)
@@ -351,6 +355,7 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="After cleaning")
 
   dfs <- matrix(nrow = m, ncol = g)
   stats <- matrix(nrow = m, ncol = g)
+  effect.est <- matrix(nrow = m, ncol = g)
   ps <- matrix(nrow = m, ncol = g)
   nobs <- matrix(nrow = m, ncol = g)
   maf <- matrix(nrow = m, ncol = g)
@@ -406,6 +411,7 @@ for (i in loopStart:mloop){
     {
       dfs[i, ] <- rep(NA, g)
       stats[i, ] <- rep(NA, g)
+      effect.est[i,] <- rep(NA, g)
       ps[i, ] = rep(1, g)
       rsquare[i, ] <- rep(NA,g)
       rsquare_base[i, ]<-rep(NA,g)
@@ -415,6 +421,7 @@ for (i in loopStart:mloop){
       if(i >1 | file>file.from | frag>1){
         dfs[i, ] <- dfs[i - 1, ]
         stats[i, ] <- stats[i - 1, ]
+        effect.est[i, ] <- effect.est[i - 1, ]
         ps[i, ] <- ps[i - 1, ]
         rsquare[i, ] <- rsquare[i - 1, ]
         rsquare_base[i, ] <-rsquare_base[i - 1, ]
@@ -487,8 +494,8 @@ for (i in loopStart:mloop){
       {
         if(!is.null(Z)) eig.R <- emma.eigen.R.w.Z(Z, K, X) #This will be used to get REstricted ML (REML)
         if(is.null(Z)) eig.R <- emma.eigen.R.wo.Z(   K, X) #This will be used to get REstricted ML (REML)
-        if(!is.null(Z)) REMLE <- GAPIT.emma.REMLE(ys[j,], X, K, Z, ngrids, llim, ulim, esp, eig.R)
-        if(is.null(Z)) REMLE <- GAPIT.emma.REMLE(ys[j,], X, K, Z = NULL, ngrids, llim, ulim, esp, eig.R)
+        if(!is.null(Z)) REMLE <- emma.REMLE(ys[j,], X, K, Z, ngrids, llim, ulim, esp, eig.R)
+        if(is.null(Z)) REMLE <- emma.REMLE(ys[j,], X, K, Z = NULL, ngrids, llim, ulim, esp, eig.R)
         if(!is.null(Z) & !is.null(K))  U <- eig.L$vectors * matrix(c(sqrt(1/(eig.L$values + REMLE$delta)),rep(sqrt(1/REMLE$delta),nr - tv)),nr,((nr-tv)+length(eig.L$values)),byrow=TRUE)
         if(is.null(Z) & !is.null(K))  U <- eig.L$vectors * matrix(  sqrt(1/(eig.L$values + REMLE$delta)),nr,length(eig.L$values),byrow=TRUE)
 
@@ -756,8 +763,9 @@ gc()
       #calculate t statistics and P-values
       if(i > 0 | file>file.from |frag>1)
       {
-        if(!is.null(K)) stats[i, j] <- beta[q1]/sqrt(iXX[q1, q1] *vgs)
+        if(!is.null(K)) stats[i, j] <- beta[q1]/sqrt(iXX[q1, q1] *vgs) 
         if(is.null(K)) stats[i, j] <- beta[q1]/sqrt(iXX[q1, q1] *ves)
+        effect.est[i, ] <- beta[q1]
         ps[i, ] <- 2 * pt(abs(stats[i, ]), dfs[i, ],lower.tail = FALSE)
         
               #Calculate the maximum full likelihood function value and the r square
@@ -797,6 +805,7 @@ if(!fullGD)
   write.table(nobs, paste("GAPIT.TMP.nobs.",name.of.trait,file,".",frag,".txt",sep=""), quote = FALSE, sep = "\t", row.names = FALSE,col.names = FALSE)
   write.table(rsquare_base, paste("GAPIT.TMP.rsquare.base.",name.of.trait,file,".",frag,".txt",sep=""), quote = FALSE, sep = "\t", row.names = FALSE,col.names = FALSE)
   write.table(rsquare, paste("GAPIT.TMP.rsquare.",name.of.trait,file,".",frag,".txt",sep=""), quote = FALSE, sep = "\t", row.names = FALSE,col.names = FALSE)
+  write.table(effect.est, paste("GAPIT.TMP.effect.est.",name.of.trait,file,".",frag,".txt",sep=""), quote = FALSE, sep = "\t", row.names = FALSE,col.names = FALSE)
   #rm(dfs,stats,ps,nobs,maf,GI)   #This cause problem on return
   #gc()
 }
@@ -817,10 +826,14 @@ Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="GWAS done for this Trait")
 Memory=GAPIT.Memory(Memory=Memory,Infor="GWAS done for this Trait")
 
 
-return(list(ps = ps, REMLs = -2*REMLs, stats = stats, rsquare_base = rsquare_base, rsquare = rsquare, dfs = dfs,maf=maf,nobs = nobs,Timmer=Timmer,Memory=Memory,
+return(list(ps = ps, REMLs = -2*REMLs, stats = stats, effect.est = effect.est, rsquare_base = rsquare_base, rsquare = rsquare, dfs = dfs,maf=maf,nobs = nobs,Timmer=Timmer,Memory=Memory,
         vgs = vgs, ves = ves, BLUP = BLUP, BLUP_Plus_Mean = BLUP_Plus_Mean,
         PEV = PEV, BLUE=BLUE, logLM = logLM))
 
 #print("GAPIT.EMMAxP3D accomplished successfully!")
 }#end of GAPIT.EMMAxP3D function
+
+
+
+
 

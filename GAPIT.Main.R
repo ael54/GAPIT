@@ -1,5 +1,5 @@
-`GAPIT.Main` <-
-function(Y,G=NULL,GD=NULL,GM=NULL,KI=NULL,Z=NULL,CV=NULL,SNP.P3D=TRUE,GP=NULL,GK=NULL,
+##############################################################################################
+GAPIT.Main <- function(Y,G=NULL,GD=NULL,GM=NULL,KI=NULL,Z=NULL,CV=NULL,SNP.P3D=TRUE,GP=NULL,GK=NULL,
                 group.from=1000000 ,group.to=1,group.by=10,kinship.cluster="average", kinship.group='Mean',kinship.algorithm=NULL,DPP=50000,
                	ngrid = 100, llin = -10, ulim = 10, esp = 1e-10,
                 file.path=NULL,file.from=NULL, file.to=NULL, file.total=NULL, file.fragment = 512, file.G=NULL, file.Ext.G=NULL,file.GD=NULL, file.GM=NULL, file.Ext.GD=NULL,file.Ext.GM=NULL,
@@ -677,6 +677,7 @@ theMAF <- try(read.table(paste("GAPIT.TMP.maf.",name.of.trait,file,".",frag,".tx
 thenobs <- try(read.table(paste("GAPIT.TMP.nobs.",name.of.trait,file,".",frag,".txt",sep=""),head= FALSE),silent=TRUE)
 thersquare_base <- try(read.table(paste("GAPIT.TMP.rsquare.base.",name.of.trait,file,".",frag,".txt",sep=""),head= FALSE),silent=TRUE)
 thersquare <- try(read.table(paste("GAPIT.TMP.rsquare.",name.of.trait,file,".",frag,".txt",sep=""),head= FALSE),silent=TRUE)
+theeffect.est <- try(read.table(paste("GAPIT.TMP.effect.est.",name.of.trait,file,".",frag,".txt",sep=""),head= FALSE),silent=TRUE)
 
 
 
@@ -694,7 +695,8 @@ if(inherits(theGI, "try-error"))  {
   colnames(theMAF )="MAF"
   colnames(thenobs )="nobs"
   colnames(thersquare_base) = "Base.Model.R.square"  
-  colnames(thersquare) = "Model.R.square"  
+  colnames(thersquare) = "Model.R.square"
+  colnames(theeffect.est) = "Effect.Est"    
   colnames(theGI) = colnames(GI)
  
 
@@ -709,12 +711,14 @@ if(inherits(theGI, "try-error"))  {
     allnobs=thenobs
     allrsquare_base=thersquare_base
     allrsquare=thersquare
+    alleffect.est=theeffect.est
   }else{
     allP=as.data.frame(rbind(as.matrix(allP),as.matrix(theP))  )
     allMAF=as.data.frame(rbind(as.matrix(allMAF),as.matrix(theMAF)) )
     allnobs=as.data.frame(rbind(as.matrix(allnobs),as.matrix(thenobs)))
     allrsquare_base=as.data.frame(rbind(as.matrix(allrsquare_base),as.matrix(thersquare_base)))
     allrsquare=as.data.frame(rbind(as.matrix(allrsquare),as.matrix(thersquare)))
+    alleffect.est=as.data.frame(rbind(as.matrix(alleffect.est),as.matrix(theeffect.est)))
     GI=as.data.frame(rbind(as.matrix(GI),as.matrix(theGI)))
   }
 
@@ -732,6 +736,7 @@ frag=frag+1   #Progress to next fragment
   p3d$nobs=allnobs
   p3d$rsquare_base=allrsquare_base
   p3d$rsquare=allrsquare
+  p3d$effect.est=alleffect.est
   
 #Delete all the GAPIT.TMP files
 theFile=paste("GAPIT.TMP.",name.of.trait,".*")
@@ -788,6 +793,7 @@ nobs=p3d$nobs
 maf=p3d$maf
 rsquare_base=p3d$rsquare_base
 rsquare=p3d$rsquare
+effect.est=p3d$effect.est
 
   
 Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Extract p3d results")
@@ -831,6 +837,9 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="Extract GWAS start")
 	index=maf>=SNP.MAF	     
 	PWI.Filtered=cbind(GI,ps,maf,nobs,rsquare_base,rsquare)[index,]
 	colnames(PWI.Filtered)=c("SNP","Chromosome","Position ","P.value", "maf", "nobs", "Rsquare.of.Model.without.SNP","Rsquare.of.Model.with.SNP")
+  
+  GWAS.2 <- cbind(GI, effect.est)
+  colnames(GWAS.2) <- c("SNP","Chromosome","Position ", "Allelic Effect Estimate")
   	     
 Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="MAF filtered")
 Memory=GAPIT.Memory(Memory=Memory,Infor="MAF filtered")
@@ -872,8 +881,10 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="Manhattan plot")
   #GAPIT.Table(final.table = PWIP$PWIP, name.of.trait = name.of.trait,SNP.FDR=SNP.FDR)
   GWAS=PWIP$PWIP[PWIP$PWIP[,9]<=SNP.FDR,]
 
-  if(file.output) write.table(GWAS, paste("GAPIT.", name.of.trait, ".GWAS.Results.csv", sep = ""), quote = FALSE, sep = ",", row.names = FALSE,col.names = TRUE)
-
+  if(file.output){
+   write.table(GWAS, paste("GAPIT.", name.of.trait, ".GWAS.Results.csv", sep = ""), quote = FALSE, sep = ",", row.names = FALSE,col.names = TRUE)
+   write.table(GWAS.2, paste("GAPIT.", name.of.trait, ".Allelic_Effect_Estimates.csv", sep = ""), quote = FALSE, sep = ",", row.names = FALSE,col.names = TRUE)
+  }
 
 
   
@@ -908,4 +919,5 @@ print("=========================================================================
 return (list(Timmer=Timmer,Compression=Compression,kinship.optimum=theK.return, kinship=KI,PC=PC,GWAS=GWAS, GPS=GPS,REMLs=Compression[count,4],Timmer=Timmer,Memory=Memory))
 
 }#The function GAPIT.Main ends here
+
 
