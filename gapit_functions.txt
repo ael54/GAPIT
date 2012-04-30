@@ -4449,10 +4449,10 @@ if(output.numerical) write.table(GD,  "GAPIT.Genotype.Numerical.txt", quote = FA
 if(output.hapmap) write.table(myGenotype$G,  "GAPIT.Genotype.hmp.txt", quote = FALSE, sep = "\t", row.names = FALSE,col.names = FALSE)
 
 #In case of null Y and null GP, return genotype only  
-if(is.null(Y) & is.null(GP)) return (list(GWAS=NULL,GPS=NULL,compression=NULL,kinship.optimum=NULL,kinship=myGenotype$KI,PCA=myGenotype$PC,GD=data.frame(cbind(GT,GD)),GI=GI,G=myGenotype$G))
+if(is.null(Y) & is.null(GP)) return (list(GWAS=NULL,GPS=NULL,compression=NULL,kinship.optimum=NULL,kinship=myGenotype$KI,PCA=myGenotype$PC,GD=data.frame(cbind(as.data.frame(GT),as.data.frame(GD))),GI=GI,G=myGenotype$G))
 
 #In case of null Y, return genotype only          
-if(is.null(Y)) return (list(GWAS=NULL,GPS=NULL,compression=NULL,kinship.optimum=NULL,kinship=myGenotype$KI,PCA=myGenotype$PC,GD=cbind(GT,GD),G=myGenotype$G))
+if(is.null(Y)) return (list(GWAS=NULL,GPS=NULL,compression=NULL,kinship.optimum=NULL,kinship=myGenotype$KI,PCA=myGenotype$PC,GD=data.frame(cbind(as.date.frame(GT),as.data.frame(GD))),Gi=GI,G=myGenotype$G))
 
 rm(myGenotype)
 gc()
