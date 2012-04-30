@@ -1,5 +1,5 @@
 ################################################################################
-#GAPIT – Genome Association and Prediction Integrated Tool
+#GAPIT: Genome Association and Prediction Integrated Tool
 #This is an R package that performs Genome Wide Association Study (GWAS) and 
 # genome prediction (or selection). #This program uses state-of-the-art methods 
 #developed for statistical genetics, such as the unified mixed model, EMMA, 
@@ -793,9 +793,15 @@ if(!is.null(K)) tv=ncol(K)
 if(!is.null(K)) eig.L <- emma.eigen.L(Z, K) #this function handle both NULL Z and non-NULL Z matrix
 
 eig.L$values[eig.L$values<0]=0
-
 Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="eig.L")
 Memory=GAPIT.Memory(Memory=Memory,Infor="eig.L")
+
+#print("debuge")
+#print(labels(eig.L))
+#print(dim((eig.L$values))
+#printdim((eig.L$vectors))
+#stop("sdgdfg")
+
 
 #decomposation with fixed effect (SNP not included)
 #print("Calling emma.eigen.R.w.Z...")
@@ -811,13 +817,12 @@ eig.R$values[eig.R$values<0]=0
 print(labels(eig.R))
 print(length(eig.R$values))
 print(dim(eig.R$vectors))
-
 #print("emma.eigen.R.w.Z called!!!")
 #Handler of error in emma
 
 if(!is.null(K)){
 if(inherits(eig.R, "try-error"))
-       return(list(ps = NULL, REMLs = NA, stats = NULL, dfs = NULL,maf=NULL,nobs = NULL,Timmer=Timmer,Memory=Memory,
+       return(list(ps = NULL, REMLs = NA, stats = NULL, effect.est = NULL, dfs = NULL,maf=NULL,nobs = NULL,Timmer=Timmer,Memory=Memory,
         vgs = NA, ves = NA, BLUP = NULL, BLUP_Plus_Mean = NULL,
         PEV = NULL, BLUE=NULL))
 
@@ -866,14 +871,15 @@ if(optOnly){
 
   if( !is.null(Z) & !is.null(K)) eig.full.plus.delta <- as.matrix(c((eig.L$values + REMLE_delta), rep(REMLE_delta,(nr - tv))))
   if( is.null(Z) & !is.null(K))  eig.full.plus.delta <- as.matrix((eig.L$values + REMLE_delta))
-  
+
+  if(!is.null(K)){
    if(length(which(eig.L$values < 0)) > 0 ){
     print("---------------------------------------------------The group kinship matrix at this compression level is not positive semidefinite. Please select another compression level.---------------------------------------------------")
            return(list(ps = NULL, REMLs = 999999, stats = NULL, effect.est = NULL, dfs = NULL,maf=NULL,nobs = NULL,Timmer=Timmer,Memory=Memory,
            vgs = 1.000, ves = 1.000, BLUP = NULL, BLUP_Plus_Mean = NULL,
            PEV = NULL, BLUE=NULL))
     }
-
+  }
   
 
   #Calculate the log likelihood function for the intercept only model
@@ -970,14 +976,16 @@ if( is.null(Z) & !is.null(K))  U <- eig.L$vectors * matrix(  sqrt(1/(eig.L$value
 if( !is.null(Z) & !is.null(K)) eig.full.plus.delta <- as.matrix(c((eig.L$values + REMLE_delta), rep(REMLE_delta,(nr - tv))))
 if( is.null(Z) & !is.null(K))  eig.full.plus.delta <- as.matrix((eig.L$values + REMLE_delta))
 
+
+
+if(!is.null(K)){
 if(length(which(eig.L$values < 0)) > 0 ){
  print("---------------------------------------------------The group kinship matrix at this compression level is not positive semidefinite. Please select anohter compression level.---------------------------------------------------")
        return(list(ps = NULL, REMLs = 999999, stats = NULL, effect.est = NULL, dfs = NULL,maf=NULL,nobs = NULL,Timmer=Timmer,Memory=Memory,
         vgs = 1.000, ves = 1.000, BLUP = NULL, BLUP_Plus_Mean = NULL,
         PEV = NULL, BLUE=NULL))
  }
-
-
+}
 
 
 Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="U Matrix")
@@ -1088,6 +1096,7 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="Before cleaning")
   #allocate spaces for SNPs
   rm(dfs)
   rm(stats)
+  rm(effect.est)
   rm(ps)
   rm(nobs)
   rm(maf)
@@ -1100,6 +1109,7 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="After cleaning")
 
   dfs <- matrix(nrow = m, ncol = g)
   stats <- matrix(nrow = m, ncol = g)
+  effect.est <- matrix(nrow = m, ncol = g)
   ps <- matrix(nrow = m, ncol = g)
   nobs <- matrix(nrow = m, ncol = g)
   maf <- matrix(nrow = m, ncol = g)
@@ -1155,6 +1165,7 @@ for (i in loopStart:mloop){
     {
       dfs[i, ] <- rep(NA, g)
       stats[i, ] <- rep(NA, g)
+      effect.est[i,] <- rep(NA, g)
       ps[i, ] = rep(1, g)
       rsquare[i, ] <- rep(NA,g)
       rsquare_base[i, ]<-rep(NA,g)
@@ -1164,6 +1175,7 @@ for (i in loopStart:mloop){
       if(i >1 | file>file.from | frag>1){
         dfs[i, ] <- dfs[i - 1, ]
         stats[i, ] <- stats[i - 1, ]
+        effect.est[i, ] <- effect.est[i - 1, ]
         ps[i, ] <- ps[i - 1, ]
         rsquare[i, ] <- rsquare[i - 1, ]
         rsquare_base[i, ] <-rsquare_base[i - 1, ]
@@ -1505,8 +1517,9 @@ gc()
       #calculate t statistics and P-values
       if(i > 0 | file>file.from |frag>1)
       {
-        if(!is.null(K)) stats[i, j] <- beta[q1]/sqrt(iXX[q1, q1] *vgs)
+        if(!is.null(K)) stats[i, j] <- beta[q1]/sqrt(iXX[q1, q1] *vgs) 
         if(is.null(K)) stats[i, j] <- beta[q1]/sqrt(iXX[q1, q1] *ves)
+        effect.est[i, ] <- beta[q1]
         ps[i, ] <- 2 * pt(abs(stats[i, ]), dfs[i, ],lower.tail = FALSE)
         
               #Calculate the maximum full likelihood function value and the r square
@@ -1546,6 +1559,7 @@ if(!fullGD)
   write.table(nobs, paste("GAPIT.TMP.nobs.",name.of.trait,file,".",frag,".txt",sep=""), quote = FALSE, sep = "\t", row.names = FALSE,col.names = FALSE)
   write.table(rsquare_base, paste("GAPIT.TMP.rsquare.base.",name.of.trait,file,".",frag,".txt",sep=""), quote = FALSE, sep = "\t", row.names = FALSE,col.names = FALSE)
   write.table(rsquare, paste("GAPIT.TMP.rsquare.",name.of.trait,file,".",frag,".txt",sep=""), quote = FALSE, sep = "\t", row.names = FALSE,col.names = FALSE)
+  write.table(effect.est, paste("GAPIT.TMP.effect.est.",name.of.trait,file,".",frag,".txt",sep=""), quote = FALSE, sep = "\t", row.names = FALSE,col.names = FALSE)
   #rm(dfs,stats,ps,nobs,maf,GI)   #This cause problem on return
   #gc()
 }
@@ -1566,12 +1580,16 @@ Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="GWAS done for this Trait")
 Memory=GAPIT.Memory(Memory=Memory,Infor="GWAS done for this Trait")
 
 
-return(list(ps = ps, REMLs = -2*REMLs, stats = stats, rsquare_base = rsquare_base, rsquare = rsquare, dfs = dfs,maf=maf,nobs = nobs,Timmer=Timmer,Memory=Memory,
+return(list(ps = ps, REMLs = -2*REMLs, stats = stats, effect.est = effect.est, rsquare_base = rsquare_base, rsquare = rsquare, dfs = dfs,maf=maf,nobs = nobs,Timmer=Timmer,Memory=Memory,
         vgs = vgs, ves = ves, BLUP = BLUP, BLUP_Plus_Mean = BLUP_Plus_Mean,
         PEV = PEV, BLUE=BLUE, logLM = logLM))
 
 #print("GAPIT.EMMAxP3D accomplished successfully!")
 }#end of GAPIT.EMMAxP3D function
+
+
+
+
 
 `GAPIT.Fragment` <-
 function(file.path=NULL,file.from=NULL, file.to=NULL,file.total=NULL,file.G=NULL,
@@ -2028,6 +2046,7 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="Sampling genotype")
 
 #Plot thirt part kinship
 if(!is.null(KI) &file.output) {
+if(KI!=1) {
 
 
 
@@ -2056,6 +2075,7 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="plot heatmap")
 
     
   } #end of if(nrow(KI)<1000)
+} #end of if(KI!=1)
 } #end of if(!is.null(KI))
 
 Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Before SUPER")
@@ -2839,7 +2859,7 @@ function(Y,G=NULL,GD=NULL,GM=NULL,KI=NULL,Z=NULL,CV=NULL,SNP.P3D=TRUE,GP=NULL,GK
                 genoFormat=NULL,hasGenotype=NULL,byFile=NULL,fullGD=NULL,PC=NULL,GI=NULL, Timmer = NULL, Memory = NULL,
                 sangwich.top=NULL,sangwich.bottom=NULL,QC=TRUE,GTindex=NULL,LD=0.05,
                 file.output=TRUE,cutOff=0.01, Model.selection = FALSE){
-#Object: To perform GWAS and GPS (Genomic Prediction/Selection)
+#Object: To perform GWAS and GPS (Genomic Prediction or Selection)
 #Output: GWAS table (text file), QQ plot (PDF), Manhattan plot (PDF), genomic prediction (text file), and
 #        genetic and residual variance components
 #Authors: Zhiwu Zhang
@@ -3505,6 +3525,7 @@ theMAF <- try(read.table(paste("GAPIT.TMP.maf.",name.of.trait,file,".",frag,".tx
 thenobs <- try(read.table(paste("GAPIT.TMP.nobs.",name.of.trait,file,".",frag,".txt",sep=""),head= FALSE),silent=TRUE)
 thersquare_base <- try(read.table(paste("GAPIT.TMP.rsquare.base.",name.of.trait,file,".",frag,".txt",sep=""),head= FALSE),silent=TRUE)
 thersquare <- try(read.table(paste("GAPIT.TMP.rsquare.",name.of.trait,file,".",frag,".txt",sep=""),head= FALSE),silent=TRUE)
+theeffect.est <- try(read.table(paste("GAPIT.TMP.effect.est.",name.of.trait,file,".",frag,".txt",sep=""),head= FALSE),silent=TRUE)
 
 
 
@@ -3522,7 +3543,8 @@ if(inherits(theGI, "try-error"))  {
   colnames(theMAF )="MAF"
   colnames(thenobs )="nobs"
   colnames(thersquare_base) = "Base.Model.R.square"  
-  colnames(thersquare) = "Model.R.square"  
+  colnames(thersquare) = "Model.R.square"
+  colnames(theeffect.est) = "Effect.Est"    
   colnames(theGI) = colnames(GI)
  
 
@@ -3537,12 +3559,14 @@ if(inherits(theGI, "try-error"))  {
     allnobs=thenobs
     allrsquare_base=thersquare_base
     allrsquare=thersquare
+    alleffect.est=theeffect.est
   }else{
     allP=as.data.frame(rbind(as.matrix(allP),as.matrix(theP))  )
     allMAF=as.data.frame(rbind(as.matrix(allMAF),as.matrix(theMAF)) )
     allnobs=as.data.frame(rbind(as.matrix(allnobs),as.matrix(thenobs)))
     allrsquare_base=as.data.frame(rbind(as.matrix(allrsquare_base),as.matrix(thersquare_base)))
     allrsquare=as.data.frame(rbind(as.matrix(allrsquare),as.matrix(thersquare)))
+    alleffect.est=as.data.frame(rbind(as.matrix(alleffect.est),as.matrix(theeffect.est)))
     GI=as.data.frame(rbind(as.matrix(GI),as.matrix(theGI)))
   }
 
@@ -3560,6 +3584,7 @@ frag=frag+1   #Progress to next fragment
   p3d$nobs=allnobs
   p3d$rsquare_base=allrsquare_base
   p3d$rsquare=allrsquare
+  p3d$effect.est=alleffect.est
   
 #Delete all the GAPIT.TMP files
 theFile=paste("GAPIT.TMP.",name.of.trait,".*")
@@ -3616,6 +3641,7 @@ nobs=p3d$nobs
 maf=p3d$maf
 rsquare_base=p3d$rsquare_base
 rsquare=p3d$rsquare
+effect.est=p3d$effect.est
 
   
 Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Extract p3d results")
@@ -3659,6 +3685,9 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="Extract GWAS start")
 	index=maf>=SNP.MAF	     
 	PWI.Filtered=cbind(GI,ps,maf,nobs,rsquare_base,rsquare)[index,]
 	colnames(PWI.Filtered)=c("SNP","Chromosome","Position ","P.value", "maf", "nobs", "Rsquare.of.Model.without.SNP","Rsquare.of.Model.with.SNP")
+  
+  GWAS.2 <- cbind(GI, effect.est)
+  colnames(GWAS.2) <- c("SNP","Chromosome","Position ", "Allelic Effect Estimate")
   	     
 Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="MAF filtered")
 Memory=GAPIT.Memory(Memory=Memory,Infor="MAF filtered")
@@ -3700,8 +3729,10 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="Manhattan plot")
   #GAPIT.Table(final.table = PWIP$PWIP, name.of.trait = name.of.trait,SNP.FDR=SNP.FDR)
   GWAS=PWIP$PWIP[PWIP$PWIP[,9]<=SNP.FDR,]
 
-  if(file.output) write.table(GWAS, paste("GAPIT.", name.of.trait, ".GWAS.Results.csv", sep = ""), quote = FALSE, sep = ",", row.names = FALSE,col.names = TRUE)
-
+  if(file.output){
+   write.table(GWAS, paste("GAPIT.", name.of.trait, ".GWAS.Results.csv", sep = ""), quote = FALSE, sep = ",", row.names = FALSE,col.names = TRUE)
+   write.table(GWAS.2, paste("GAPIT.", name.of.trait, ".Allelic_Effect_Estimates.csv", sep = ""), quote = FALSE, sep = ",", row.names = FALSE,col.names = TRUE)
+  }
 
 
   
@@ -3736,6 +3767,7 @@ print("=========================================================================
 return (list(Timmer=Timmer,Compression=Compression,kinship.optimum=theK.return, kinship=KI,PC=PC,GWAS=GWAS, GPS=GPS,REMLs=Compression[count,4],Timmer=Timmer,Memory=Memory))
 
 }#The function GAPIT.Main ends here
+
 
 `GAPIT.Manhattan` <-
 function(GI.MP = NULL, name.of.trait = "Trait", 
@@ -4038,8 +4070,10 @@ dev.off()
 
 pdf("GAPIT.PCA.pdf", width = 12, height = 12)
 par(mar = c(5,5,5,5))
-for(i in 1:(as.numeric(PC.number[1])-1)){
-for(j in (i+1):(as.numeric(PC.number[1]))){
+maxPlot=min(as.numeric(PC.number[1]),3)
+
+for(i in 1:(maxPlot-1)){
+for(j in (i+1):(maxPlot)){
 plot(PCA.X$x[,i],PCA.X$x[,j],xlab=paste("PC",i,sep=""),ylab=paste("PC",j,sep=""),pch=1,col="red",cex=1.0,cex.lab=1.5, cex.axis=1.2, lwd=2,las=1)
 }
 }
