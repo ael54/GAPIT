@@ -3018,6 +3018,15 @@ if(!is.null(KI))
   } 
 }
 
+if(!is.null(CV)){
+ 	if(group.to<=ncol(CV)+1) {
+	#The minimum of group is number of columns in CV
+	  group.from=ncol(CV)+2
+	  group.to=ncol(CV)+2
+	  warning("The upper bound of groups (group.to) is not sufficient. both boundries were set to their minimum and GLM is performed!")
+	}
+}
+
 #bin.fold=ceiling(log2(bin.to/bin.from))
 #bin.seq=0:bin.fold
 #bin.level=bin.from*2^bin.seq
