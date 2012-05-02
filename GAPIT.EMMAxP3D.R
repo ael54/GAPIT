@@ -3,7 +3,7 @@ function(ys,xs,K=NULL,Z=NULL,X0=NULL,CVI=NULL,GI=NULL,GP=NULL,
 		file.path=NULL,file.from=NULL,file.to=NULL,file.total=1, genoFormat="Hapmap", file.fragment=NULL,byFile=FALSE,fullGD=TRUE,SNP.fraction=1,
     file.G=NULL,file.Ext.G=NULL,GTindex=NULL,file.GD=NULL, file.GM=NULL, file.Ext.GD=NULL,file.Ext.GM=NULL,
     SNP.P3D=TRUE,Timmer,Memory,optOnly=TRUE,SNP.effect="Add",SNP.impute="Middle", SNP.permutation=FALSE,
-    ngrids=100,llim=-10,ulim=10,esp=1e-10,name.of.trait=NULL   ){
+    ngrids=100,llim=-10,ulim=10,esp=1e-10,name.of.trait=NULL, Create.indicator = FALSE   ){
 #Object: To esimate variance component by using EMMA algorithm and perform GWAS with P3D/EMMAx
 #Output: ps, REMLs, stats, dfs, vgs, ves, BLUP,  BLUP_Plus_Mean, PEV
 #Authors: Feng Tian, Alex Lipka and Zhiwu Zhang
@@ -231,7 +231,7 @@ if( is.null(Z) & !is.null(K))  eig.full.plus.delta <- as.matrix((eig.L$values + 
 
 if(!is.null(K)){
 if(length(which(eig.L$values < 0)) > 0 ){
- print("---------------------------------------------------The group kinship matrix at this compression level is not positive semidefinite. Please select anohter compression level.---------------------------------------------------")
+ print("---------------------------------------------------The group kinship matrix at this compression level is not positive semidefinite. Please select another compression level.---------------------------------------------------")
        return(list(ps = NULL, REMLs = 999999, stats = NULL, effect.est = NULL, dfs = NULL,maf=NULL,nobs = NULL,Timmer=Timmer,Memory=Memory,
         vgs = 1.000, ves = 1.000, BLUP = NULL, BLUP_Plus_Mean = NULL,
         PEV = NULL, BLUE=NULL))
@@ -492,8 +492,14 @@ for (i in loopStart:mloop){
 
 
       if(i >0 | file>file.from|frag>1) dfs[i, j] <- nr - q1
-    	if(i >0 | file>file.from|frag>1) X <- cbind(X0[vids, , drop = FALSE], xs[vids,i])
-
+    	if(i >0 | file>file.from|frag>1){ 
+        if(!Create.indicator) X <- cbind(X0[vids, , drop = FALSE], xs[vids,i])
+        if(Create.indicator){
+          x.indicator <- GAPIT.Create.Indicator(xs[vids,i])
+          X <- cbind(X0[vids, , drop = FALSE], x.indicator)
+        }       
+        
+      } 
        #Recalculate eig and REML if not using P3D  NOTE THIS USED TO BE BEFORE the two solid lines
       if(SNP.P3D==FALSE & !is.null(K))
       {
@@ -770,11 +776,20 @@ gc()
       #calculate t statistics and P-values
       if(i > 0 | file>file.from |frag>1)
       {
+       if(!Create.indicator){
         if(!is.null(K)) stats[i, j] <- beta[q1]/sqrt(iXX[q1, q1] *vgs) 
         if(is.null(K)) stats[i, j] <- beta[q1]/sqrt(iXX[q1, q1] *ves)
         effect.est[i, ] <- beta[q1]
         ps[i, ] <- 2 * pt(abs(stats[i, ]), dfs[i, ],lower.tail = FALSE)
-        
+       } 
+       if(Create.indicator){
+        F.num.first.two <- crossprod(beta[q1:length(beta)], solve(iXX[q1:length(beta),q1:length(beta)]))
+        if(!is.null(K)) stats[i, j] <- (F.num.first.two %*% beta[q1:length(beta)])/(length(q1:length(beta))*vgs) 
+        if(is.null(K)) stats[i, j] <- (F.num.first.two %*% beta[q1:length(beta)])/(length(q1:length(beta))*ves) 
+        effect.est[i, ] <- beta[q1:length(beta)]
+        ps[i, ] <- pf(stats[i, j], df1=length(q1:length(beta)), df2=(nr-ncol(X)), lower.tail = FALSE)
+        dfs[i,] <- nr-nrow(X)
+       } 
               #Calculate the maximum full likelihood function value and the r square
 
       X.beta <- X%*%beta
