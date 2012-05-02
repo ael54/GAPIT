@@ -748,7 +748,7 @@ function(y, X, K, Z=NULL, ngrids=100, llim=-10, ulim=10,
 }
 
 `GAPIT.EMMAxP3D` <-
-function(ys,xs,K=NULL,Z=NULL,X0=NULL,GI=NULL,GP=NULL,
+function(ys,xs,K=NULL,Z=NULL,X0=NULL,CVI=NULL,GI=NULL,GP=NULL,
 		file.path=NULL,file.from=NULL,file.to=NULL,file.total=1, genoFormat="Hapmap", file.fragment=NULL,byFile=FALSE,fullGD=TRUE,SNP.fraction=1,
     file.G=NULL,file.Ext.G=NULL,GTindex=NULL,file.GD=NULL, file.GM=NULL, file.Ext.GD=NULL,file.Ext.GM=NULL,
     SNP.P3D=TRUE,Timmer,Memory,optOnly=TRUE,SNP.effect="Add",SNP.impute="Middle", SNP.permutation=FALSE,
@@ -1449,9 +1449,10 @@ for (i in loopStart:mloop){
         term.2=C21%*%crossprod(Xt,Zt)%*%K
         C22=(term.1-term.2 )
         PEV=as.matrix(diag(C22))
-
-        BLUE=X%*%beta
-
+		XCV=as.matrix(cbind(1,data.frame(CVI[,-1])))
+		BLUE=XCV%*%beta
+	
+		
     	  Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="PEV")
         Memory=GAPIT.Memory(Memory=Memory,Infor="PEV")
 
@@ -1471,7 +1472,8 @@ for (i in loopStart:mloop){
         BLUP_Plus_Mean = NaN
         PEV = ves
         #print(paste("X row:",nrow(X)," col:",ncol(X)," beta:",length(beta),sep=""))
-       	BLUE=X%*%beta
+		XCV=as.matrix(cbind(1,data.frame(CVI[,-1])))
+       	BLUE=XCV%*%beta
 
       }
 
@@ -2932,6 +2934,7 @@ if(QC)
   Y=qc$Y
   KI=qc$KI
   CV=qc$CV
+  CVI=qc$CVI
   Z=qc$Z
   GK=qc$GK
 }
@@ -3047,6 +3050,7 @@ numSetting=length(GROUP)*length(kinship.cluster)*length(kinship.group)*length(bi
 #Reform Y, GD and CV into EMMA format
 ys=as.matrix(Y[2])
 X0=as.matrix(CV[,-1])
+CV.taxa=CVI[,1]
 
 #Initial
 count=0
@@ -3153,7 +3157,7 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="Prio PreP3D")
 print("It made it to here")
 print("The dimension of xs is:")
 print(dim(as.matrix(as.data.frame(GD[GTindex,colInclude]))))
-p3d <- GAPIT.EMMAxP3D(ys=ys,xs=as.matrix(as.data.frame(GD[GTindex,colInclude])),K = as.matrix(bk$KW) ,Z=matrix(as.numeric(as.matrix(zc$Z[,-1])),nrow=zrow,ncol=zcol),X0=X0,GI=GI,SNP.P3D=SNP.P3D,Timmer=Timmer,Memory=Memory,fullGD=fullGD,
+p3d <- GAPIT.EMMAxP3D(ys=ys,xs=as.matrix(as.data.frame(GD[GTindex,colInclude])),K = as.matrix(bk$KW) ,Z=matrix(as.numeric(as.matrix(zc$Z[,-1])),nrow=zrow,ncol=zcol),X0=X0,CVI=CVI,GI=GI,SNP.P3D=SNP.P3D,Timmer=Timmer,Memory=Memory,fullGD=fullGD,
         SNP.permutation=SNP.permutation, GP=GP,
 			 file.path=file.path,file.from=file.from,file.to=file.to,file.total=file.total, file.fragment = file.fragment, byFile=byFile, file.G=file.G,file.Ext.G=file.Ext.G,file.GD=file.GD, file.GM=file.GM, file.Ext.GD=file.Ext.GD,file.Ext.GM=file.Ext.GM,
        GTindex=GTindex,genoFormat=genoFormat,optOnly=optOnly,SNP.effect=SNP.effect,SNP.impute=SNP.impute,name.of.trait=name.of.trait)
@@ -3328,7 +3332,7 @@ if(Model.selection == TRUE){
     #print(dim(bk$KW))
     
 
-    p3d <- GAPIT.EMMAxP3D(ys=ys,xs=as.matrix(as.data.frame(GD[,1])),K = as.matrix(bk$KW) ,Z=Z1,X0=X0.test,GI=GI,SNP.P3D=SNP.P3D,Timmer=Timmer,Memory=Memory,fullGD=fullGD,
+    p3d <- GAPIT.EMMAxP3D(ys=ys,xs=as.matrix(as.data.frame(GD[,1])),K = as.matrix(bk$KW) ,Z=Z1,X0=X0.test,CVI=CVI,GI=GI,SNP.P3D=SNP.P3D,Timmer=Timmer,Memory=Memory,fullGD=fullGD,
             SNP.permutation=SNP.permutation, GP=GP,
 			      file.path=file.path,file.from=file.from,file.to=file.to,file.total=file.total, file.fragment = file.fragment, byFile=byFile, file.G=file.G,file.Ext.G=file.Ext.G,file.GD=file.GD, file.GM=file.GM, file.Ext.GD=file.Ext.GD,file.Ext.GM=file.Ext.GM,
             GTindex=GTindex,genoFormat=genoFormat,optOnly=TRUE,SNP.effect=SNP.effect,SNP.impute=SNP.impute,name.of.trait=name.of.trait)
@@ -3459,7 +3463,7 @@ print("--------------  Sandwich bottom with raw burger------------------------")
  }
  
  print("--------------EMMAxP3D with the optimum setting-----------------------") 
-  p3d <- GAPIT.EMMAxP3D(ys=ys,xs=as.matrix(as.data.frame(GD[GTindex,colInclude]))   ,K = as.matrix(bk$KW) ,Z=Z1,X0=as.matrix(X0),GI=GI,SNP.P3D=SNP.P3D,Timmer=Timmer,Memory=Memory,fullGD=fullGD,
+  p3d <- GAPIT.EMMAxP3D(ys=ys,xs=as.matrix(as.data.frame(GD[GTindex,colInclude]))   ,K = as.matrix(bk$KW) ,Z=Z1,X0=as.matrix(X0),CVI=CVI, GI=GI,SNP.P3D=SNP.P3D,Timmer=Timmer,Memory=Memory,fullGD=fullGD,
           SNP.permutation=SNP.permutation, GP=GP,
     			 file.path=file.path,file.from=file.from,file.to=file.to,file.total=file.total, file.fragment = file.fragment, byFile=byFile, file.G=file.G,file.Ext.G=file.Ext.G,file.GD=file.GD, file.GM=file.GM, file.Ext.GD=file.Ext.GD,file.Ext.GM=file.Ext.GM,
            GTindex=GTindex,genoFormat=genoFormat,optOnly=optOnly,SNP.effect=SNP.effect,SNP.impute=SNP.impute,name.of.trait=name.of.trait)  
@@ -3672,7 +3676,14 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="Extract bread results")
 if(!byPass &file.output) 
 {
 print("Exporting BLUP")
+BLUE=data.frame(cbind(data.frame(CV.taxa),data.frame(p3d$BLUE)))
+colnames(BLUE)=c("Taxa","BLUE")
+BB= merge(gs$BLUP, BLUE, by.x = "Taxa", by.y = "Taxa")
+Prediction=BB[,5]+BB[,7]
+Pred=data.frame(cbind(BB,data.frame(Prediction)))
+
   try(write.table(gs$BLUP, paste("GAPIT.", name.of.trait,".BLUP.csv" ,sep = ""), quote = FALSE, sep = ",", row.names = FALSE,col.names = TRUE))
+  try(write.table(Pred, paste("GAPIT.", name.of.trait,".PRED.csv" ,sep = ""), quote = FALSE, sep = ",", row.names = FALSE,col.names = TRUE))
 }
 
 if(byPass) 
@@ -4203,6 +4214,7 @@ function(Y=NULL,KI=NULL,GT=NULL,CV=NULL,Z=NULL,GK=NULL){
 print("Removing duplicates...")
 Y=GAPIT.RemoveDuplicate(Y)
 CV=GAPIT.RemoveDuplicate(CV)
+CVI=CV
 GK=GAPIT.RemoveDuplicate(GK)
 if(!is.null(Z))Z=GAPIT.RemoveDuplicate(Z)
 
@@ -4332,7 +4344,7 @@ GTindex=position[order.taxa.kept]
 flag=nrow(Y)==nrow(Z)-1&nrow(Y)==nrow(GT)&nrow(Y)==nrow(CV)
 
 print("GAPIT.QC accomplished successfully!")
-return(list(Y = Y, KI = KI, GT = GT, CV = CV, Z = Z, GK = GK, GTindex=GTindex, flag=flag))
+return(list(Y = Y, KI = KI, GT = GT, CV = CV, CVI=CVI,Z = Z, GK = GK, GTindex=GTindex, flag=flag))
 }#The function GAPIT.QC ends here
 
 `GAPIT.QQ` <-
