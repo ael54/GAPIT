@@ -1,5 +1,5 @@
 `GAPIT.EMMAxP3D` <-
-function(ys,xs,K=NULL,Z=NULL,X0=NULL,GI=NULL,GP=NULL,
+function(ys,xs,K=NULL,Z=NULL,X0=NULL,CVI=NULL,GI=NULL,GP=NULL,
 		file.path=NULL,file.from=NULL,file.to=NULL,file.total=1, genoFormat="Hapmap", file.fragment=NULL,byFile=FALSE,fullGD=TRUE,SNP.fraction=1,
     file.G=NULL,file.Ext.G=NULL,GTindex=NULL,file.GD=NULL, file.GM=NULL, file.Ext.GD=NULL,file.Ext.GM=NULL,
     SNP.P3D=TRUE,Timmer,Memory,optOnly=TRUE,SNP.effect="Add",SNP.impute="Middle", SNP.permutation=FALSE,
@@ -700,9 +700,10 @@ for (i in loopStart:mloop){
         term.2=C21%*%crossprod(Xt,Zt)%*%K
         C22=(term.1-term.2 )
         PEV=as.matrix(diag(C22))
-
-        BLUE=X%*%beta
-
+		XCV=as.matrix(cbind(1,data.frame(CVI[,-1])))
+		BLUE=XCV%*%beta
+	
+		
     	  Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="PEV")
         Memory=GAPIT.Memory(Memory=Memory,Infor="PEV")
 
@@ -722,7 +723,8 @@ for (i in loopStart:mloop){
         BLUP_Plus_Mean = NaN
         PEV = ves
         #print(paste("X row:",nrow(X)," col:",ncol(X)," beta:",length(beta),sep=""))
-       	BLUE=X%*%beta
+		XCV=as.matrix(cbind(1,data.frame(CVI[,-1])))
+       	BLUE=XCV%*%beta
 
       }
 
