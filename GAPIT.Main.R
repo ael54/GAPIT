@@ -32,7 +32,7 @@ if(length(thisY) <3){
         
 if(shortcut){
 print(paste("Y is empty. No GWAS/GS performed for ",name.of.trait,sep=""))
-return (list(compression=NULL,kinship.optimum=NULL, kinship=KI,PC=PC,GWAS=NULL, GPS=NULL,REMLs=NULL,Timmer=Timmer,Memory=Memory))
+return (list(compression=NULL,kinship.optimum=NULL, kinship=KI,PC=PC,GWAS=NULL, GPS=NULL,Pred=NULL, REMLs=NULL,Timmer=Timmer,Memory=Memory))
 }
 
 #QC
@@ -822,16 +822,17 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="Extract bread results")
   
 }
 
-#Export BLUP and PEV
-if(!byPass &file.output) 
-{
-print("Exporting BLUP")
+#Merge BLUP and BLUE
 BLUE=data.frame(cbind(data.frame(CV.taxa),data.frame(p3d$BLUE)))
 colnames(BLUE)=c("Taxa","BLUE")
 BB= merge(gs$BLUP, BLUE, by.x = "Taxa", by.y = "Taxa")
 Prediction=BB[,5]+BB[,7]
 Pred=data.frame(cbind(BB,data.frame(Prediction)))
 
+#Export BLUP and PEV
+if(!byPass &file.output) 
+{
+print("Exporting BLUP and Pred")
   try(write.table(gs$BLUP, paste("GAPIT.", name.of.trait,".BLUP.csv" ,sep = ""), quote = FALSE, sep = ",", row.names = FALSE,col.names = TRUE))
   try(write.table(Pred, paste("GAPIT.", name.of.trait,".PRED.csv" ,sep = ""), quote = FALSE, sep = ",", row.names = FALSE,col.names = TRUE))
 }
