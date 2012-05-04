@@ -618,6 +618,40 @@ print("GAPIT.Compression.Visualization accomplished successfully!")
 
 }#GAPIT.Compression.Plots ends here
 
+`GAPIT.Create.Indicator` <-
+function(xs ){
+#Object: To esimate variance component by using EMMA algorithm and perform GWAS with P3D/EMMAx
+#Output: ps, REMLs, stats, dfs, vgs, ves, BLUP,  BLUP_Plus_Mean, PEV
+#Authors: Alex Lipka
+# Last update: April 30, 2012
+##############################################################################################
+
+unique.sorted <- unique(xs)[order(unique(xs))]
+x.min <- which(unique.sorted == min(unique(xs)))
+ 
+
+x.ind <- NULL
+
+
+for(i in unique.sorted[-x.min]){
+ x.col <- rep(NA, length(xs))
+ x.col[which(xs==i)] <- 1
+ x.col[which(xs!=i)] <- 0
+ x.col[which(is.na(xs))] <- NaN
+ x.ind <- cbind(x.ind,x.col)                         
+}
+
+
+
+return(x.ind)
+
+#print("GAPIT.EMMAxP3D accomplished successfully!")
+}#end of GAPIT.EMMAxP3D function
+
+
+
+
+
 `GAPIT.CVMergePC` <-
 function(X,Y){
 #Object: To convert character SNP genotpe to numerical
@@ -752,7 +786,7 @@ function(ys,xs,K=NULL,Z=NULL,X0=NULL,CVI=NULL,GI=NULL,GP=NULL,
 		file.path=NULL,file.from=NULL,file.to=NULL,file.total=1, genoFormat="Hapmap", file.fragment=NULL,byFile=FALSE,fullGD=TRUE,SNP.fraction=1,
     file.G=NULL,file.Ext.G=NULL,GTindex=NULL,file.GD=NULL, file.GM=NULL, file.Ext.GD=NULL,file.Ext.GM=NULL,
     SNP.P3D=TRUE,Timmer,Memory,optOnly=TRUE,SNP.effect="Add",SNP.impute="Middle", SNP.permutation=FALSE,
-    ngrids=100,llim=-10,ulim=10,esp=1e-10,name.of.trait=NULL   ){
+    ngrids=100,llim=-10,ulim=10,esp=1e-10,name.of.trait=NULL, Create.indicator = FALSE   ){
 #Object: To esimate variance component by using EMMA algorithm and perform GWAS with P3D/EMMAx
 #Output: ps, REMLs, stats, dfs, vgs, ves, BLUP,  BLUP_Plus_Mean, PEV
 #Authors: Feng Tian, Alex Lipka and Zhiwu Zhang
@@ -980,7 +1014,7 @@ if( is.null(Z) & !is.null(K))  eig.full.plus.delta <- as.matrix((eig.L$values + 
 
 if(!is.null(K)){
 if(length(which(eig.L$values < 0)) > 0 ){
- print("---------------------------------------------------The group kinship matrix at this compression level is not positive semidefinite. Please select anohter compression level.---------------------------------------------------")
+ print("---------------------------------------------------The group kinship matrix at this compression level is not positive semidefinite. Please select another compression level.---------------------------------------------------")
        return(list(ps = NULL, REMLs = 999999, stats = NULL, effect.est = NULL, dfs = NULL,maf=NULL,nobs = NULL,Timmer=Timmer,Memory=Memory,
         vgs = 1.000, ves = 1.000, BLUP = NULL, BLUP_Plus_Mean = NULL,
         PEV = NULL, BLUE=NULL))
@@ -1241,8 +1275,14 @@ for (i in loopStart:mloop){
 
 
       if(i >0 | file>file.from|frag>1) dfs[i, j] <- nr - q1
-    	if(i >0 | file>file.from|frag>1) X <- cbind(X0[vids, , drop = FALSE], xs[vids,i])
-
+    	if(i >0 | file>file.from|frag>1){ 
+        if(!Create.indicator) X <- cbind(X0[vids, , drop = FALSE], xs[vids,i])
+        if(Create.indicator){
+          x.indicator <- GAPIT.Create.Indicator(xs[vids,i])
+          X <- cbind(X0[vids, , drop = FALSE], x.indicator)
+        }       
+        
+      } 
        #Recalculate eig and REML if not using P3D  NOTE THIS USED TO BE BEFORE the two solid lines
       if(SNP.P3D==FALSE & !is.null(K))
       {
@@ -1519,11 +1559,20 @@ gc()
       #calculate t statistics and P-values
       if(i > 0 | file>file.from |frag>1)
       {
+       if(!Create.indicator){
         if(!is.null(K)) stats[i, j] <- beta[q1]/sqrt(iXX[q1, q1] *vgs) 
         if(is.null(K)) stats[i, j] <- beta[q1]/sqrt(iXX[q1, q1] *ves)
         effect.est[i, ] <- beta[q1]
         ps[i, ] <- 2 * pt(abs(stats[i, ]), dfs[i, ],lower.tail = FALSE)
-        
+       } 
+       if(Create.indicator){
+        F.num.first.two <- crossprod(beta[q1:length(beta)], solve(iXX[q1:length(beta),q1:length(beta)]))
+        if(!is.null(K)) stats[i, j] <- (F.num.first.two %*% beta[q1:length(beta)])/(length(q1:length(beta))*vgs) 
+        if(is.null(K)) stats[i, j] <- (F.num.first.two %*% beta[q1:length(beta)])/(length(q1:length(beta))*ves) 
+        effect.est[i, ] <- beta[q1:length(beta)]
+        ps[i, ] <- pf(stats[i, j], df1=length(q1:length(beta)), df2=(nr-ncol(X)), lower.tail = FALSE)
+        dfs[i,] <- nr-nrow(X)
+       } 
               #Calculate the maximum full likelihood function value and the r square
 
       X.beta <- X%*%beta
@@ -2882,7 +2931,7 @@ if(length(thisY) <3){
         
 if(shortcut){
 print(paste("Y is empty. No GWAS/GS performed for ",name.of.trait,sep=""))
-return (list(compression=NULL,kinship.optimum=NULL, kinship=KI,PC=PC,GWAS=NULL, GPS=NULL,REMLs=NULL,Timmer=Timmer,Memory=Memory))
+return (list(compression=NULL,kinship.optimum=NULL, kinship=KI,PC=PC,GWAS=NULL, GPS=NULL,Pred=NULL, REMLs=NULL,Timmer=Timmer,Memory=Memory))
 }
 
 #QC
@@ -3672,16 +3721,17 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="Extract bread results")
   
 }
 
-#Export BLUP and PEV
-if(!byPass &file.output) 
-{
-print("Exporting BLUP")
+#Merge BLUP and BLUE
 BLUE=data.frame(cbind(data.frame(CV.taxa),data.frame(p3d$BLUE)))
 colnames(BLUE)=c("Taxa","BLUE")
 BB= merge(gs$BLUP, BLUE, by.x = "Taxa", by.y = "Taxa")
 Prediction=BB[,5]+BB[,7]
 Pred=data.frame(cbind(BB,data.frame(Prediction)))
 
+#Export BLUP and PEV
+if(!byPass &file.output) 
+{
+print("Exporting BLUP and Pred")
   try(write.table(gs$BLUP, paste("GAPIT.", name.of.trait,".BLUP.csv" ,sep = ""), quote = FALSE, sep = ",", row.names = FALSE,col.names = TRUE))
   try(write.table(Pred, paste("GAPIT.", name.of.trait,".PRED.csv" ,sep = ""), quote = FALSE, sep = ",", row.names = FALSE,col.names = TRUE))
 }
@@ -3784,7 +3834,7 @@ print(paste(name.of.trait, "has been analyzed successfully!") )
 print(paste("The results are saved in the directory of ", getwd()) )
 print("==========================================================================================")
 
-return (list(Timmer=Timmer,Compression=Compression,kinship.optimum=theK.return, kinship=KI,PC=PC,GWAS=GWAS, GPS=GPS,REMLs=Compression[count,4],Timmer=Timmer,Memory=Memory))
+return (list(Timmer=Timmer,Compression=Compression,kinship.optimum=theK.return, kinship=KI,PC=PC,GWAS=GWAS, GPS=GPS,Pred=Pred,REMLs=Compression[count,4],Timmer=Timmer,Memory=Memory))
 
 }#The function GAPIT.Main ends here
 
@@ -4470,10 +4520,10 @@ if(output.numerical) write.table(GD,  "GAPIT.Genotype.Numerical.txt", quote = FA
 if(output.hapmap) write.table(myGenotype$G,  "GAPIT.Genotype.hmp.txt", quote = FALSE, sep = "\t", row.names = FALSE,col.names = FALSE)
 
 #In case of null Y and null GP, return genotype only  
-if(is.null(Y) & is.null(GP)) return (list(GWAS=NULL,GPS=NULL,compression=NULL,kinship.optimum=NULL,kinship=myGenotype$KI,PCA=myGenotype$PC,GD=data.frame(cbind(as.data.frame(GT),as.data.frame(GD))),GI=GI,G=myGenotype$G))
+if(is.null(Y) & is.null(GP)) return (list(GWAS=NULL,GPS=NULL,Pred=NULL,compression=NULL,kinship.optimum=NULL,kinship=myGenotype$KI,PCA=myGenotype$PC,GD=data.frame(cbind(as.data.frame(GT),as.data.frame(GD))),GI=GI,G=myGenotype$G))
 
 #In case of null Y, return genotype only          
-if(is.null(Y)) return (list(GWAS=NULL,GPS=NULL,compression=NULL,kinship.optimum=NULL,kinship=myGenotype$KI,PCA=myGenotype$PC,GD=data.frame(cbind(as.date.frame(GT),as.data.frame(GD))),Gi=GI,G=myGenotype$G))
+if(is.null(Y)) return (list(GWAS=NULL,GPS=NULL,Pred=NULL,compression=NULL,kinship.optimum=NULL,kinship=myGenotype$KI,PCA=myGenotype$PC,GD=data.frame(cbind(as.date.frame(GT),as.data.frame(GD))),Gi=GI,G=myGenotype$G))
 
 rm(myGenotype)
 gc()
@@ -4513,10 +4563,10 @@ if(ncol(Y)==2) {
 h2= as.matrix(as.numeric(as.vector(gapitMain$Compression[,5]))/(as.numeric(as.vector(gapitMain$Compression[,5]))+as.numeric(as.vector(gapitMain$Compression[,6]))),length(gapitMain$Compression[,6]),1)
 colnames(h2)=c("Heritability")
   print("GAPIT accomplished successfully for single trait. Results are saved. GWAS and GPS are returned!")
-  return (list(GWAS=gapitMain$GWAS,GPS=gapitMain$GPS,compression=as.data.frame(cbind(gapitMain$Compression,h2)), kinship.optimum=gapitMain$kinship.optimum,kinship=gapitMain$kinship,PCA=gapitMain$PC))
+  return (list(GWAS=gapitMain$GWAS,GPS=gapitMain$GPS,Pred=gapitMain$Pred,compression=as.data.frame(cbind(gapitMain$Compression,h2)), kinship.optimum=gapitMain$kinship.optimum,kinship=gapitMain$kinship,PCA=gapitMain$PC))
 }else{
   print("GAPIT accomplished successfully for multiple traits. Results are saved")
-  return (list(GWAS=NULL,GPS=NULL,compression=NULL,kinship.optimum=NULL,kinship=gapitMain$KI,PCA=gapitMain$PC))
+  return (list(GWAS=NULL,GPS=NULL,Pred=NULL,compression=NULL,kinship.optimum=NULL,kinship=gapitMain$KI,PCA=gapitMain$PC))
 }
 
 }# end ofdetecting null Y
