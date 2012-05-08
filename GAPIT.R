@@ -1,5 +1,5 @@
 `GAPIT` <-
-function(Y=NULL,G=NULL,GD=NULL,GM=NULL,KI=NULL,Z=NULL,CV=NULL,GP=NULL,GK=NULL,
+function(Y=NULL,G=NULL,GD=NULL,GM=NULL,KI=NULL,Z=NULL,CV=NULL,CV.Inheritance=NULL,GP=NULL,GK=NULL,
                 group.from=30 ,group.to=1000000,group.by=10,DPP=100000, 
                 kinship.cluster="average", kinship.group='Mean',kinship.algorithm="VanRaden",                                                    
                 bin.from=10000,bin.to=10000,bin.by=10000,inclosure.from=10,inclosure.to=10,inclosure.by=10,
@@ -75,7 +75,7 @@ if(ncol(Y)<2)  stop ("Phenotype should have taxa name and one trait at least. Pl
 
 for (trait in 2: ncol(Y))  {
 print(paste("Processing trait: ",colnames(Y)[trait],sep=""))
-gapitMain <- GAPIT.Main(Y=Y[,c(1,trait)],G=G,GD=GD,GM=GM,KI=KI,Z=Z,CV=CV,GP=GP,GK=GK,SNP.P3D=SNP.P3D,kinship.algorithm=kinship.algorithm,
+gapitMain <- GAPIT.Main(Y=Y[,c(1,trait)],G=G,GD=GD,GM=GM,KI=KI,Z=Z,CV=CV,CV.Inheritance=CV.Inheritance,GP=GP,GK=GK,SNP.P3D=SNP.P3D,kinship.algorithm=kinship.algorithm,
                       bin.from=bin.from,bin.to=bin.to,bin.by=bin.by,inclosure.from=inclosure.from,inclosure.to=inclosure.to,inclosure.by=inclosure.by,
 				              group.from=group.from,group.to=group.to,group.by=group.by,kinship.cluster=kinship.cluster,kinship.group=kinship.group,name.of.trait = colnames(Y)[trait],
                         file.path=file.path,file.from=file.from, file.to=file.to, file.total=file.total, file.fragment = file.fragment, file.G=file.G,file.Ext.G=file.Ext.G,file.GD=file.GD, file.GM=file.GM, file.Ext.GD=file.Ext.GD,file.Ext.GM=file.Ext.GM, 

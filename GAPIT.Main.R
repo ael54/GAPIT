@@ -1,5 +1,5 @@
 `GAPIT.Main` <-
-function(Y,G=NULL,GD=NULL,GM=NULL,KI=NULL,Z=NULL,CV=NULL,SNP.P3D=TRUE,GP=NULL,GK=NULL,
+function(Y,G=NULL,GD=NULL,GM=NULL,KI=NULL,Z=NULL,CV=NULL,CV.Inheritance=NULL,SNP.P3D=TRUE,GP=NULL,GK=NULL,
                 group.from=1000000 ,group.to=1,group.by=10,kinship.cluster="average", kinship.group='Mean',kinship.algorithm=NULL,DPP=50000,
                	ngrid = 100, llin = -10, ulim = 10, esp = 1e-10,
                 file.path=NULL,file.from=NULL, file.to=NULL, file.total=NULL, file.fragment = 512, file.G=NULL, file.Ext.G=NULL,file.GD=NULL, file.GM=NULL, file.Ext.GD=NULL,file.Ext.GM=NULL,
@@ -68,7 +68,9 @@ if(kinship.algorithm!="SUPER" & !is.null(Z))
 }
 
 #Create CV with all 1's if it is not provided
+noCV=FALSE
 if(is.null(CV)){
+noCV=TRUE
 CV=Y[,1:2]
 CV[,2]=1
 colnames(CV)=c("taxa","overall")
@@ -77,6 +79,7 @@ colnames(CV)=c("taxa","overall")
 #Remove duplicat and integragation of data
 print("QC is in process...")
 
+CVI <- CV
 if(QC)
 {
   qc <- GAPIT.QC(Y=Y,KI=KI, GT=GT,CV=CV,Z=Z,GK=GK)
@@ -84,10 +87,16 @@ if(QC)
   Y=qc$Y
   KI=qc$KI
   CV=qc$CV
-  CVI=qc$CVI
   Z=qc$Z
   GK=qc$GK
+
+  if(noCV)CVI=qc$CV
 }
+
+
+
+print("The value of QC is")
+print(QC)
 
 rm(qc)
 gc()
@@ -110,12 +119,12 @@ print("group from and to were set to 1")
   group.to=1
 }
 
-print("------------Examing data (QC) done-------------------------------------")
+print("------------Examining data (QC) done-------------------------------------")
 
-#Sagnwich topp bun: To gep GP if it is not provided
+#Sagnwich top bun: To gep GP if it is not provided
 if(!is.null(sangwich.top) & is.null(GP))
 {
-print("-------------------Sagnwich topp bun-----------------------------------")
+print("-------------------Sandwich top bun-----------------------------------")
 
   if(is.null(GK)){
     set.seed(1)
@@ -133,7 +142,7 @@ print("-------------------Sagnwich topp bun-----------------------------------")
   GP=GAPIT.Bread(Y=Y,CV=CV,Z=Z,KI=KI,GK=GK,GD=cbind(as.data.frame(GT),as.data.frame(GD)),GM=GI,method=sangwich.top,GTindex=GTindex,LD=LD)$GWAS
   GK=NULL
   
-print("-------------------Sagnwich topp bun: done-----------------------------")  
+print("-------------------Sagnwich top bun: done-----------------------------")  
 
 } 
 
@@ -143,7 +152,7 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="SagnwichTop")
 #Sandwich burger and dressing
 print("-------------------Sandwich burger and dressing------------------------")
 
-#Hanler of group boundry
+#Handler of group boundry
 if(group.from>group.to) stop("GAPIT says: group.to should  be larger than group.from. Please correct them!")
 
 if(is.null(CV) | (!is.null(CV)& group.to<ncol(CV))) {
@@ -214,7 +223,7 @@ if(min(X0[,1])!=max(X0[,1])) X0 <- cbind(1, X0) #do not add overall mean if X0 h
 Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="DataProcessing")
 Memory=GAPIT.Memory(Memory=Memory,Infor="DataProcessing")
 
-print("-------------------------Iterstion in process--------------------------")
+print("-------------------------Iteration in process--------------------------")
 print(paste("Total iterations: ",numSetting,sep=""))
 
 #Loop to optimize cluster algorithm, group number and kinship type
@@ -307,7 +316,7 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="Prio PreP3D")
 print("It made it to here")
 print("The dimension of xs is:")
 print(dim(as.matrix(as.data.frame(GD[GTindex,colInclude]))))
-p3d <- GAPIT.EMMAxP3D(ys=ys,xs=as.matrix(as.data.frame(GD[GTindex,colInclude])),K = as.matrix(bk$KW) ,Z=matrix(as.numeric(as.matrix(zc$Z[,-1])),nrow=zrow,ncol=zcol),X0=X0,CVI=CVI,GI=GI,SNP.P3D=SNP.P3D,Timmer=Timmer,Memory=Memory,fullGD=fullGD,
+p3d <- GAPIT.EMMAxP3D(ys=ys,xs=as.matrix(as.data.frame(GD[GTindex,colInclude])),K = as.matrix(bk$KW) ,Z=matrix(as.numeric(as.matrix(zc$Z[,-1])),nrow=zrow,ncol=zcol),X0=X0,CVI=CVI,CV.Inheritance=CV.Inheritance,GI=GI,SNP.P3D=SNP.P3D,Timmer=Timmer,Memory=Memory,fullGD=fullGD,
         SNP.permutation=SNP.permutation, GP=GP,
 			 file.path=file.path,file.from=file.from,file.to=file.to,file.total=file.total, file.fragment = file.fragment, byFile=byFile, file.G=file.G,file.Ext.G=file.Ext.G,file.GD=file.GD, file.GM=file.GM, file.Ext.GD=file.Ext.GD,file.Ext.GM=file.Ext.GM,
        GTindex=GTindex,genoFormat=genoFormat,optOnly=optOnly,SNP.effect=SNP.effect,SNP.impute=SNP.impute,name.of.trait=name.of.trait)
@@ -482,7 +491,7 @@ if(Model.selection == TRUE){
     #print(dim(bk$KW))
     
 
-    p3d <- GAPIT.EMMAxP3D(ys=ys,xs=as.matrix(as.data.frame(GD[,1])),K = as.matrix(bk$KW) ,Z=Z1,X0=X0.test,CVI=CVI,GI=GI,SNP.P3D=SNP.P3D,Timmer=Timmer,Memory=Memory,fullGD=fullGD,
+    p3d <- GAPIT.EMMAxP3D(ys=ys,xs=as.matrix(as.data.frame(GD[,1])),K = as.matrix(bk$KW) ,Z=Z1,X0=X0.test,CVI=CVI,CV.Inheritance=CV.Inheritance,GI=GI,SNP.P3D=SNP.P3D,Timmer=Timmer,Memory=Memory,fullGD=fullGD,
             SNP.permutation=SNP.permutation, GP=GP,
 			      file.path=file.path,file.from=file.from,file.to=file.to,file.total=file.total, file.fragment = file.fragment, byFile=byFile, file.G=file.G,file.Ext.G=file.Ext.G,file.GD=file.GD, file.GM=file.GM, file.Ext.GD=file.Ext.GD,file.Ext.GM=file.Ext.GM,
             GTindex=GTindex,genoFormat=genoFormat,optOnly=TRUE,SNP.effect=SNP.effect,SNP.impute=SNP.impute,name.of.trait=name.of.trait)
@@ -613,7 +622,7 @@ print("--------------  Sandwich bottom with raw burger------------------------")
  }
  
  print("--------------EMMAxP3D with the optimum setting-----------------------") 
-  p3d <- GAPIT.EMMAxP3D(ys=ys,xs=as.matrix(as.data.frame(GD[GTindex,colInclude]))   ,K = as.matrix(bk$KW) ,Z=Z1,X0=as.matrix(X0),CVI=CVI, GI=GI,SNP.P3D=SNP.P3D,Timmer=Timmer,Memory=Memory,fullGD=fullGD,
+  p3d <- GAPIT.EMMAxP3D(ys=ys,xs=as.matrix(as.data.frame(GD[GTindex,colInclude]))   ,K = as.matrix(bk$KW) ,Z=Z1,X0=as.matrix(X0),CVI=CVI, CV.Inheritance=CV.Inheritance,GI=GI,SNP.P3D=SNP.P3D,Timmer=Timmer,Memory=Memory,fullGD=fullGD,
           SNP.permutation=SNP.permutation, GP=GP,
     			 file.path=file.path,file.from=file.from,file.to=file.to,file.total=file.total, file.fragment = file.fragment, byFile=byFile, file.G=file.G,file.Ext.G=file.Ext.G,file.GD=file.GD, file.GM=file.GM, file.Ext.GD=file.Ext.GD,file.Ext.GM=file.Ext.GM,
            GTindex=GTindex,genoFormat=genoFormat,optOnly=optOnly,SNP.effect=SNP.effect,SNP.impute=SNP.impute,name.of.trait=name.of.trait)  
@@ -811,23 +820,31 @@ Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Extract p3d results")
 Memory=GAPIT.Memory(Memory=Memory,Infor="Extract p3d results")
   
 }else{
+  print("The head of myBread$GWAS is")
+  print(head(myBread$GWAS))
+  
   GPS=myBread$BLUP
   ps=myBread$GWAS[,4]
   nobs=myBread$GWAS[,6]
-  maf=myBread$GWAS[,4]*0+.5
-
+  maf=myBread$GWAS[,5]*0+.5
+  rsquare_base=rep(NA,length(ps))
+  rsquare=rep(NA,length(ps))
+  
 Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Extract bread results")
 Memory=GAPIT.Memory(Memory=Memory,Infor="Extract bread results")
-
-  
+ 
 }
 
 #Merge BLUP and BLUE
-BLUE=data.frame(cbind(data.frame(CV.taxa),data.frame(p3d$BLUE)))
-colnames(BLUE)=c("Taxa","BLUE")
-BB= merge(gs$BLUP, BLUE, by.x = "Taxa", by.y = "Taxa")
-Prediction=BB[,5]+BB[,7]
-Pred=data.frame(cbind(BB,data.frame(Prediction)))
+if(!byPass){
+
+ BLUE=data.frame(cbind(data.frame(CV.taxa),data.frame(p3d$BLUE)))
+ colnames(BLUE)=c("Taxa","BLUE")
+ BB= merge(gs$BLUP, BLUE, by.x = "Taxa", by.y = "Taxa")
+ Prediction=BB[,5]+BB[,7]
+ Pred=data.frame(cbind(BB,data.frame(Prediction)))
+}
+
 
 #Export BLUP and PEV
 if(!byPass &file.output) 
@@ -856,9 +873,11 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="Extract GWAS start")
 	index=maf>=SNP.MAF	     
 	PWI.Filtered=cbind(GI,ps,maf,nobs,rsquare_base,rsquare)[index,]
 	colnames(PWI.Filtered)=c("SNP","Chromosome","Position ","P.value", "maf", "nobs", "Rsquare.of.Model.without.SNP","Rsquare.of.Model.with.SNP")
-  
+
+if(!byPass){  
   GWAS.2 <- cbind(GI, effect.est)
   colnames(GWAS.2) <- c("SNP","Chromosome","Position ", "Allelic Effect Estimate")
+}
   	     
 Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="MAF filtered")
 Memory=GAPIT.Memory(Memory=Memory,Infor="MAF filtered")
@@ -902,7 +921,7 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="Manhattan plot")
 
   if(file.output){
    write.table(GWAS, paste("GAPIT.", name.of.trait, ".GWAS.Results.csv", sep = ""), quote = FALSE, sep = ",", row.names = FALSE,col.names = TRUE)
-   write.table(GWAS.2, paste("GAPIT.", name.of.trait, ".Allelic_Effect_Estimates.csv", sep = ""), quote = FALSE, sep = ",", row.names = FALSE,col.names = TRUE)
+   if(!byPass) write.table(GWAS.2, paste("GAPIT.", name.of.trait, ".Allelic_Effect_Estimates.csv", sep = ""), quote = FALSE, sep = ",", row.names = FALSE,col.names = TRUE)
   }
 
 
@@ -934,6 +953,8 @@ write.table(Memory, file, quote = FALSE, sep = ",", row.names = FALSE,col.names 
 print(paste(name.of.trait, "has been analyzed successfully!") )
 print(paste("The results are saved in the directory of ", getwd()) )
 print("==========================================================================================")
+
+if(byPass) Pred <- NA
 
 return (list(Timmer=Timmer,Compression=Compression,kinship.optimum=theK.return, kinship=KI,PC=PC,GWAS=GWAS, GPS=GPS,Pred=Pred,REMLs=Compression[count,4],Timmer=Timmer,Memory=Memory))
 

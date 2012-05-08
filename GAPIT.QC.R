@@ -10,7 +10,6 @@ function(Y=NULL,KI=NULL,GT=NULL,CV=NULL,Z=NULL,GK=NULL){
 print("Removing duplicates...")
 Y=GAPIT.RemoveDuplicate(Y)
 CV=GAPIT.RemoveDuplicate(CV)
-CVI=CV
 GK=GAPIT.RemoveDuplicate(GK)
 if(!is.null(Z))Z=GAPIT.RemoveDuplicate(Z)
 
@@ -140,6 +139,6 @@ GTindex=position[order.taxa.kept]
 flag=nrow(Y)==nrow(Z)-1&nrow(Y)==nrow(GT)&nrow(Y)==nrow(CV)
 
 print("GAPIT.QC accomplished successfully!")
-return(list(Y = Y, KI = KI, GT = GT, CV = CV, CVI=CVI,Z = Z, GK = GK, GTindex=GTindex, flag=flag))
+return(list(Y = Y, KI = KI, GT = GT, CV = CV, Z = Z, GK = GK, GTindex=GTindex, flag=flag))
 }#The function GAPIT.QC ends here
 

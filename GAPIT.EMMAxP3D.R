@@ -1,5 +1,5 @@
 `GAPIT.EMMAxP3D` <-
-function(ys,xs,K=NULL,Z=NULL,X0=NULL,CVI=NULL,GI=NULL,GP=NULL,
+function(ys,xs,K=NULL,Z=NULL,X0=NULL,CVI=NULL,CV.Inheritance=NULL,GI=NULL,GP=NULL,
 		file.path=NULL,file.from=NULL,file.to=NULL,file.total=1, genoFormat="Hapmap", file.fragment=NULL,byFile=FALSE,fullGD=TRUE,SNP.fraction=1,
     file.G=NULL,file.Ext.G=NULL,GTindex=NULL,file.GD=NULL, file.GM=NULL, file.Ext.GD=NULL,file.Ext.GM=NULL,
     SNP.P3D=TRUE,Timmer,Memory,optOnly=TRUE,SNP.effect="Add",SNP.impute="Middle", SNP.permutation=FALSE,
@@ -46,13 +46,6 @@ if(!is.null(K)) eig.L <- emma.eigen.L(Z, K) #this function handle both NULL Z an
 eig.L$values[eig.L$values<0]=0
 Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="eig.L")
 Memory=GAPIT.Memory(Memory=Memory,Infor="eig.L")
-
-#print("debuge")
-#print(labels(eig.L))
-#print(dim((eig.L$values))
-#printdim((eig.L$vectors))
-#stop("sdgdfg")
-
 
 #decomposation with fixed effect (SNP not included)
 #print("Calling emma.eigen.R.w.Z...")
@@ -707,8 +700,17 @@ for (i in loopStart:mloop){
         C22=(term.1-term.2 )
         PEV=as.matrix(diag(C22))
 		XCV=as.matrix(cbind(1,data.frame(CVI[,-1])))
-		BLUE=XCV%*%beta
 	
+		#CV.Inheritance specified
+		beta.Inheritance=beta
+		if(!is.null(CV.Inheritance)){
+			XCV=XCV[,1:(1+CV.Inheritance)]
+			beta.Inheritance=beta[1:(1+CV.Inheritance)]
+		}
+		#Interception only
+		if(length(beta)==1)XCV=X
+		
+       	BLUE=XCV%*%beta.Inheritance
 		
     	  Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="PEV")
         Memory=GAPIT.Memory(Memory=Memory,Infor="PEV")
@@ -730,7 +732,18 @@ for (i in loopStart:mloop){
         PEV = ves
         #print(paste("X row:",nrow(X)," col:",ncol(X)," beta:",length(beta),sep=""))
 		XCV=as.matrix(cbind(1,data.frame(CVI[,-1])))
-       	BLUE=XCV%*%beta
+	
+		#CV.Inheritance specified
+		beta.Inheritance=beta
+		if(!is.null(CV.Inheritance)){
+			XCV=XCV[,1:(1+CV.Inheritance)]
+			beta.Inheritance=beta[1:(1+CV.Inheritance)]
+		}
+		#Interception only
+		if(length(beta)==1)XCV=X
+
+		
+       	BLUE=XCV%*%beta.Inheritance
 
       }
 
