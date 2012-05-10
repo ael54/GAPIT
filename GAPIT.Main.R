@@ -53,7 +53,7 @@ if(PCA.total>0&!is.null(CV))CV=GAPIT.CVMergePC(CV,PC)
 if(PCA.total>0&is.null(CV))CV=PC
 
 #Create Z as identity matrix from Y if it is not provided
-if(kinship.algorithm!="SUPER" & is.null(Z)){
+if(kinship.algorithm!="None" & kinship.algorithm!="SUPER" & is.null(Z)){
 taxa=as.character(Y[,1])
 Z=as.data.frame(diag(1,nrow(Y)))
 Z=rbind(taxa,Z)
@@ -62,7 +62,7 @@ Z=cbind(taxa,Z)
 }
 
 #Add the part of non proportion in Z matrix
-if(kinship.algorithm!="SUPER" & !is.null(Z))
+if(kinship.algorithm!="None" & kinship.algorithm!="SUPER" & !is.null(Z))
 {
   if(nrow(Z)-1<nrow(Y)) Z=GAPIT.ZmatrixFormation(Z=Z,Y=Y)
 }
@@ -93,7 +93,12 @@ if(QC)
   if(noCV)CVI=qc$CV
 }
 
+if(kinship.algorithm=="None" )
+{
+	theTDP=GAPIT.TDP(Y=Y,CV=CV,SNP=as.matrix(as.data.frame(GD[GTindex,])))
+return (list(Compression=NULL,kinship.optimum=NULL, kinship=NULL,PC=NULL,GWAS=theTDP$GWAS, GPS=NULL,Pred=NULL,REMLs=NULL,Timmer=Timmer,Memory=Memory))
 
+}
 
 print("The value of QC is")
 print(QC)
