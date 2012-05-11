@@ -619,25 +619,64 @@ print("GAPIT.Compression.Visualization accomplished successfully!")
 }#GAPIT.Compression.Plots ends here
 
 `GAPIT.Create.Indicator` <-
-function(xs ){
+function(xs, SNP.impute = "Major" ){
 #Object: To esimate variance component by using EMMA algorithm and perform GWAS with P3D/EMMAx
 #Output: ps, REMLs, stats, dfs, vgs, ves, BLUP,  BLUP_Plus_Mean, PEV
-#Authors: Alex Lipka
+#Authors: Alex Lipka and Zhiwu Zhang
 # Last update: April 30, 2012
 ##############################################################################################
 
-unique.sorted <- unique(xs)[order(unique(xs))]
-x.min <- which(unique.sorted == min(unique(xs)))
- 
+#Determine the number of bits of the genotype
 
+bit=nchar(as.character(xs[1]))
+
+
+#Identify the SNPs classified as missing
+
+if(bit==1)  {
+xss[xss=="xs"]="N"
+xs[xs=="-"]="N"
+xs[xs=="+"]="N"
+xs[xs=="/"]="N"
+xs[xs=="K"]="Z" #K (for GT genotype)is is replaced by Z to ensure heterozygose has the largest value
+}
+
+if(bit==2)  {
+xs[xs=="xsxs"]="N"
+xs[xs=="--"]="N"
+xs[xs=="++"]="N"
+xs[xs=="//"]="N"
+xs[xs=="NN"]="N"
+}
+
+#Create the indicators
+
+#Sort the SNPs by genotype frequency
+xs.temp <- xs[-which(xs == "N")]
+
+frequ<- NULL
+for(i in 1:length(unique(xs.temp))) frequ <- c(frequ, length(which(xs == unique(xs)[i])))
+
+unique.sorted <- cbind(unique(xs.temp), frequ)
+
+print("unique.sorted is")
+print(unique.sorted)
+
+unique.sorted <- unique.sorted[order(unique.sorted[,2]),]
+unique.sorted <- unique.sorted[,-2]
+
+
+#Impute based on the major and minor allele frequencies
+if(SNP.impute == "Major") xs[which(is.na(xs))] = unique.sorted[1]
+if(SNP.impute == "Minor") xs[which(is.na(xs))] = unique.sorted[length(unique.sorted)]
+if(SNP.impute == "Middle") xs[which(is.na(xs))] = unique.sorted[2]
 x.ind <- NULL
 
 
-for(i in unique.sorted[-x.min]){
+for(i in unique.sorted){
  x.col <- rep(NA, length(xs))
  x.col[which(xs==i)] <- 1
  x.col[which(xs!=i)] <- 0
- x.col[which(is.na(xs))] <- NaN
  x.ind <- cbind(x.ind,x.col)                         
 }
 
@@ -786,7 +825,7 @@ function(ys,xs,K=NULL,Z=NULL,X0=NULL,CVI=NULL,CV.Inheritance=NULL,GI=NULL,GP=NUL
 		file.path=NULL,file.from=NULL,file.to=NULL,file.total=1, genoFormat="Hapmap", file.fragment=NULL,byFile=FALSE,fullGD=TRUE,SNP.fraction=1,
     file.G=NULL,file.Ext.G=NULL,GTindex=NULL,file.GD=NULL, file.GM=NULL, file.Ext.GD=NULL,file.Ext.GM=NULL,
     SNP.P3D=TRUE,Timmer,Memory,optOnly=TRUE,SNP.effect="Add",SNP.impute="Middle", SNP.permutation=FALSE,
-    ngrids=100,llim=-10,ulim=10,esp=1e-10,name.of.trait=NULL, Create.indicator = FALSE   ){
+    ngrids=100,llim=-10,ulim=10,esp=1e-10,name.of.trait=NULL, Create.indicator = FALSE){
 #Object: To esimate variance component by using EMMA algorithm and perform GWAS with P3D/EMMAx
 #Output: ps, REMLs, stats, dfs, vgs, ves, BLUP,  BLUP_Plus_Mean, PEV
 #Authors: Feng Tian, Alex Lipka and Zhiwu Zhang
@@ -1169,15 +1208,35 @@ for (i in loopStart:mloop){
     }
 
     if(i >0 | file>file.from | frag>1){
-      vids <- !is.na(xs[,i]) #### Feng changed
-      xv <- xs[vids,i]      #### Feng changed
-      vids.TRUE=which(vids==TRUE)
-      vids.FALSE=which(vids==FALSE)
-      ns=length(xv)
-      ss=sum(xv)
+      
+      if(Create.indicator){     #I need create indicators and then calculate the minor allele frequency
+       
+       xv <- GAPIT.Create.Indicator(xs[vids,i], SNP.impute = SNP.impute) 
+       vids <- !is.na(xv[,1]) #### Feng changed
+      
+       vids.TRUE=which(vids==TRUE)
+       vids.FALSE=which(vids==FALSE)
+       ns=nrow(xv)
+       ss=sum(xv[,ncol(xv)])
+       maf[i]=min(ss/ns,1-ss/ns)
+       nobs[i]=ns
+       write.table(xs[vids,i], "DEBUG.xs[vidsi].csv", quote = FALSE, sep = ",", row.names = FALSE,col.names = TRUE)
+       write.table(xv, "DEBUG.xv.csv", quote = FALSE, sep = ",", row.names = FALSE,col.names = TRUE)
+              
+      }
+     
+      if(!Create.indicator){     #### Feng changed
+       xv <- xs[vids,i]  
+       vids <- !is.na(xs[,i]) #### Feng changed
+      
+       vids.TRUE=which(vids==TRUE)
+       vids.FALSE=which(vids==FALSE)
+       ns=length(xv)
+       ss=sum(xv)
 
-      maf[i]=min(.5*ss/ns,1-.5*ss/ns)
-      nobs[i]=ns
+       maf[i]=min(.5*ss/ns,1-.5*ss/ns)
+       nobs[i]=ns
+      }
 
      nr <- sum(vids)
      if(i ==1 & file==file.from&frag==1)  {
@@ -1271,8 +1330,9 @@ for (i in loopStart:mloop){
     	if(i >0 | file>file.from|frag>1){ 
         if(!Create.indicator) X <- cbind(X0[vids, , drop = FALSE], xs[vids,i])
         if(Create.indicator){
-          x.indicator <- GAPIT.Create.Indicator(xs[vids,i])
-          X <- cbind(X0[vids, , drop = FALSE], x.indicator)
+          X <- cbind(X0[vids, , drop = FALSE], xv)
+          print("the head of X for running GWAS is")
+          print(head(X))
         }       
         
       } 
@@ -1809,7 +1869,8 @@ function(G=NULL,GD=NULL,GM=NULL,KI=NULL,
   GP = NULL,GK = NULL,GTindex=NULL,  
   bin.size = 1000,inclosure.size = 100,
   sangwich.top=NULL,sangwich.bottom=NULL,
-  file.output=TRUE ){
+  file.output=TRUE,
+  Create.indicator = FALSE){
 #Object: To unify genotype and calculate kinship and PC if required:
 #       1.For G data, convert it to GD and GI
 #       2.For GD and GM data, nothing change 
@@ -1911,14 +1972,14 @@ if(!needKinPC &SNP.fraction<1)  stop("GAPIT says: You did not require calculate 
 if(!SNP.test & is.null(KI) & !byData & !byFile)  stop("GAPIT says: For SNP.test optioin, please input either use KI or use genotype")
 
 #if(is.null(file.path) & !byData & byFile) stop("GAPIT Ssays: A path for genotype data should be provided!")
-if(is.null(file.total) & !byData & byFile) stop("APIT Ssays: Number of file should be provided: >=1")
-if(!is.null(G) & !is.null(GD)) stop("APIT Ssays: Both hapmap and EMMA format exist, choose one only.")
+if(is.null(file.total) & !byData & byFile) stop("GAPIT Ssays: Number of file should be provided: >=1")
+if(!is.null(G) & !is.null(GD)) stop("GAPIT Ssays: Both hapmap and EMMA format exist, choose one only.")
 
-if(!is.null(file.GD) & is.null(file.GM) & (!is.null(GP)|!is.null(GK)) ) stop("APIT Ssays: Genotype data and map files should be in pair")
-if(is.null(file.GD) & !is.null(file.GM) & (!is.null(GP)|!is.null(GK)) ) stop("APIT Ssays: Genotype data and map files should be in pair")
+if(!is.null(file.GD) & is.null(file.GM) & (!is.null(GP)|!is.null(GK)) ) stop("GAPIT Ssays: Genotype data and map files should be in pair")
+if(is.null(file.GD) & !is.null(file.GM) & (!is.null(GP)|!is.null(GK)) ) stop("GAPIT Ssays: Genotype data and map files should be in pair")
 
-if(!is.null(GD) & is.null(GM) & (is.null(GP)&is.null(GK)) &kinship.algorithm!="SUPER") stop("APIT Says: Genotype data and map files should be in pair")
-if(is.null(GD) & !is.null(GM) & (is.null(GP)&is.null(GK)) &kinship.algorithm!="SUPER") stop("APIT Says: Genotype data and map files should be in pair")
+if(!is.null(GD) & is.null(GM) & (is.null(GP)&is.null(GK)) &kinship.algorithm!="SUPER") stop("GAPIT Says: Genotype data and map files should be in pair")
+if(is.null(GD) & !is.null(GM) & (is.null(GP)&is.null(GK)) &kinship.algorithm!="SUPER") stop("GAPIT Says: Genotype data and map files should be in pair")
 
 
 #if(!byData & !byFile) stop("APIT Ssays: Either genotype data or files should be given!")
@@ -1956,7 +2017,7 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="Before HapMap")
 
 #Convert HapMap to numerical
 print(paste("Converting genotype...",sep=""))
-hm=GAPIT.HapMap(G,SNP.effect=SNP.effect,SNP.impute=SNP.impute)
+hm=GAPIT.HapMap(G,SNP.effect=SNP.effect,SNP.impute=SNP.impute, Create.indicator = Create.indicator)
 
 Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="after HapMap")
 Memory=GAPIT.Memory(Memory=Memory,Infor="after HapMap")
@@ -2614,7 +2675,7 @@ if(inherits(BLUP.max, "try-error"))  return()
 }   #GAPIT.GS.Visualization ends here
 
 `GAPIT.HapMap` <-
-function(G,SNP.effect="Add",SNP.impute="Middle",heading=TRUE){
+function(G,SNP.effect="Add",SNP.impute="Middle",heading=TRUE, Create.indicator = FALSE){
 #Object: To convert character SNP genotpe to numerical
 #Output: Coresponding numerical value
 #Authors: Feng Tian and Zhiwu Zhang
@@ -2646,9 +2707,11 @@ bit=nchar(as.character(G[2,12])) #to determine number of bits of genotype
 
 print("Perform numericalization")
 if(heading){
-  GD= apply(G[-1,-(1:11)],1,function(one) GAPIT.Numericalization(one,bit=bit,effect=SNP.effect,impute=SNP.impute))
+  if(!Create.indicator) GD= apply(G[-1,-(1:11)],1,function(one) GAPIT.Numericalization(one,bit=bit,effect=SNP.effect,impute=SNP.impute))
+  if(Create.indicator) GD= t(G[-1,-(1:11)])
 }else{
-  GD= apply(G[  ,-(1:11)],1,function(one) GAPIT.Numericalization(one,bit=bit,effect=SNP.effect,impute=SNP.impute))
+  if(!Create.indicator) GD= apply(G[  ,-(1:11)],1,function(one) GAPIT.Numericalization(one,bit=bit,effect=SNP.effect,impute=SNP.impute))
+  if(Create.indicator) GD= t(G[ ,-(1:11)])
 }
 
 #set GT and GI to NULL in case of null GD
@@ -2657,7 +2720,11 @@ if(is.null(GD)){
   GI=NULL
 }
 
-print(paste("Succesfuly finished converting hampmap which has bits of ", bit,sep=""))
+#print("The dimension of GD is:")
+#print(dim(GD))
+#print("The head of the first seven columns of GD is")
+#print(head(GD)[,1:7])
+if(!Create.indicator) print(paste("Succesfuly finished converting hampmap which has bits of ", bit,sep=""))
 return(list(GT=GT,GD=GD,GI=GI))
 }#end of GAPIT.HapMap function
 
@@ -2922,7 +2989,7 @@ function(Y,G=NULL,GD=NULL,GM=NULL,KI=NULL,Z=NULL,CV=NULL,CV.Inheritance=NULL,SNP
                 SNP.permutation=FALSE,SNP.CV=NULL,
                 genoFormat=NULL,hasGenotype=NULL,byFile=NULL,fullGD=NULL,PC=NULL,GI=NULL, Timmer = NULL, Memory = NULL,
                 sangwich.top=NULL,sangwich.bottom=NULL,QC=TRUE,GTindex=NULL,LD=0.05,
-                file.output=TRUE,cutOff=0.01, Model.selection = FALSE){
+                file.output=TRUE,cutOff=0.01, Model.selection = FALSE, Create.indicator = FALSE){
 #Object: To perform GWAS and GPS (Genomic Prediction or Selection)
 #Output: GWAS table (text file), QQ plot (PDF), Manhattan plot (PDF), genomic prediction (text file), and
 #        genetic and residual variance components
@@ -2948,8 +3015,8 @@ return (list(compression=NULL,kinship.optimum=NULL, kinship=KI,PC=PC,GWAS=NULL, 
 }
 
 #QC
-print("------------Examing data (QC)------------------------------------------")
-if(is.null(Y)) stop ("GAPIT says: Phenotype must exist.")
+print("------------Examining data (QC)------------------------------------------")
+if(is.null(Y)) stop ("GAPIT says: Phenotypes must exist.")
 if(is.null(KI)&missing(GD) & kinship.algorithm!="SUPER") stop ("GAPIT says: Kinship is required. As genotype is not provided, kinship can not be created.")
 
 #When GT and GD are missing, force to have fake ones (creating them from Y),GI is not required in this case
@@ -3232,11 +3299,13 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="Prio PreP3D")
 
 print("It made it to here")
 print("The dimension of xs is:")
+print("The value of SNP.impute is")
+print(SNP.impute)
 print(dim(as.matrix(as.data.frame(GD[GTindex,colInclude]))))
 p3d <- GAPIT.EMMAxP3D(ys=ys,xs=as.matrix(as.data.frame(GD[GTindex,colInclude])),K = as.matrix(bk$KW) ,Z=matrix(as.numeric(as.matrix(zc$Z[,-1])),nrow=zrow,ncol=zcol),X0=X0,CVI=CVI,CV.Inheritance=CV.Inheritance,GI=GI,SNP.P3D=SNP.P3D,Timmer=Timmer,Memory=Memory,fullGD=fullGD,
         SNP.permutation=SNP.permutation, GP=GP,
 			 file.path=file.path,file.from=file.from,file.to=file.to,file.total=file.total, file.fragment = file.fragment, byFile=byFile, file.G=file.G,file.Ext.G=file.Ext.G,file.GD=file.GD, file.GM=file.GM, file.Ext.GD=file.Ext.GD,file.Ext.GM=file.Ext.GM,
-       GTindex=GTindex,genoFormat=genoFormat,optOnly=optOnly,SNP.effect=SNP.effect,SNP.impute=SNP.impute,name.of.trait=name.of.trait)
+       GTindex=GTindex,genoFormat=genoFormat,optOnly=optOnly,SNP.effect=SNP.effect,SNP.impute=SNP.impute,name.of.trait=name.of.trait, Create.indicator = Create.indicator)
 
 Timmer=p3d$Timmer
 Memory=p3d$Memory
@@ -3411,7 +3480,7 @@ if(Model.selection == TRUE){
     p3d <- GAPIT.EMMAxP3D(ys=ys,xs=as.matrix(as.data.frame(GD[,1])),K = as.matrix(bk$KW) ,Z=Z1,X0=X0.test,CVI=CVI,CV.Inheritance=CV.Inheritance,GI=GI,SNP.P3D=SNP.P3D,Timmer=Timmer,Memory=Memory,fullGD=fullGD,
             SNP.permutation=SNP.permutation, GP=GP,
 			      file.path=file.path,file.from=file.from,file.to=file.to,file.total=file.total, file.fragment = file.fragment, byFile=byFile, file.G=file.G,file.Ext.G=file.Ext.G,file.GD=file.GD, file.GM=file.GM, file.Ext.GD=file.Ext.GD,file.Ext.GM=file.Ext.GM,
-            GTindex=GTindex,genoFormat=genoFormat,optOnly=TRUE,SNP.effect=SNP.effect,SNP.impute=SNP.impute,name.of.trait=name.of.trait)
+            GTindex=GTindex,genoFormat=genoFormat,optOnly=TRUE,SNP.effect=SNP.effect,SNP.impute=SNP.impute,name.of.trait=name.of.trait, Create.indicator = Create.indicator)
 
     
     
@@ -3542,7 +3611,7 @@ print("--------------  Sandwich bottom with raw burger------------------------")
   p3d <- GAPIT.EMMAxP3D(ys=ys,xs=as.matrix(as.data.frame(GD[GTindex,colInclude]))   ,K = as.matrix(bk$KW) ,Z=Z1,X0=as.matrix(X0),CVI=CVI, CV.Inheritance=CV.Inheritance,GI=GI,SNP.P3D=SNP.P3D,Timmer=Timmer,Memory=Memory,fullGD=fullGD,
           SNP.permutation=SNP.permutation, GP=GP,
     			 file.path=file.path,file.from=file.from,file.to=file.to,file.total=file.total, file.fragment = file.fragment, byFile=byFile, file.G=file.G,file.Ext.G=file.Ext.G,file.GD=file.GD, file.GM=file.GM, file.Ext.GD=file.Ext.GD,file.Ext.GM=file.Ext.GM,
-           GTindex=GTindex,genoFormat=genoFormat,optOnly=optOnly,SNP.effect=SNP.effect,SNP.impute=SNP.impute,name.of.trait=name.of.trait)  
+           GTindex=GTindex,genoFormat=genoFormat,optOnly=optOnly,SNP.effect=SNP.effect,SNP.impute=SNP.impute,name.of.trait=name.of.trait, Create.indicator = Create.indicator)  
     
   Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="GWAS")
   Memory=GAPIT.Memory(Memory=Memory,Infor="GWAS")  
@@ -4079,7 +4148,7 @@ return (Memory)
 }#end of GAPIT.Memory function
 
 `GAPIT.Numericalization` <-
-function(x,bit=2,effect="Add",impute="None"){
+function(x,bit=2,effect="Add",impute="None", Create.indicator = FALSE){
 #Object: To convert character SNP genotpe to numerical
 #Output: Coresponding numerical value
 #Authors: Feng Tian and Zhiwu Zhang
@@ -4508,7 +4577,8 @@ function(Y=NULL,G=NULL,GD=NULL,GM=NULL,KI=NULL,Z=NULL,CV=NULL,CV.Inheritance=NUL
                 ngrid = 100, llim = -10, ulim = 10, esp = 1e-10,
                 LD.chromosome=NULL,LD.location=NULL,LD.range=NULL,
                 sangwich.top=NULL,sangwich.bottom=NULL,QC=TRUE,GTindex=NULL,LD=0.01,
-                file.output=TRUE,cutOff=0.01, Model.selection = FALSE,output.numerical = FALSE,output.hapmap = FALSE){
+                file.output=TRUE,cutOff=0.01, Model.selection = FALSE,output.numerical = FALSE,
+                output.hapmap = FALSE, Create.indicator = FALSE){
 GAPIT.Version="2.18 (Separation of Cryptic relationship from population structure)"
 #Object: To perform GWAS and GPS (Genomic Prediction/Selection)
 #Designed by Zhiwu Zhang
@@ -4530,7 +4600,7 @@ myGenotype<-GAPIT.Genotype(G=G,GD=GD,GM=GM,KI=KI,kinship.algorithm=kinship.algor
                 SNP.MAF=SNP.MAF,FDR.Rate = FDR.Rate,SNP.FDR=SNP.FDR,SNP.effect=SNP.effect,SNP.impute=SNP.impute,
                 LD.chromosome=LD.chromosome,LD.location=LD.location,LD.range=LD.range,
                 GP=GP,GK=GK,bin.size=NULL,inclosure.size=NULL, Timmer = Timmer,Memory=Memory,
-                sangwich.top=sangwich.top,sangwich.bottom=sangwich.bottom,GTindex=NULL,file.output=file.output)
+                sangwich.top=sangwich.top,sangwich.bottom=sangwich.bottom,GTindex=NULL,file.output=file.output, Create.indicator = Create.indicator)
 
 Timmer=myGenotype$Timmer
 Memory=myGenotype$Memory
@@ -4582,7 +4652,7 @@ gapitMain <- GAPIT.Main(Y=Y[,c(1,trait)],G=G,GD=GD,GM=GM,KI=KI,Z=Z,CV=CV,CV.Inhe
                         LD.chromosome=LD.chromosome,LD.location=LD.location,LD.range=LD.range,SNP.CV=SNP.CV,SNP.robust=SNP.robust,
                         genoFormat=genoFormat,hasGenotype=hasGenotype,byFile=byFile,fullGD=fullGD,PC=PC,GI=GI,Timmer = Timmer, Memory = Memory,
                         sangwich.top=sangwich.top,sangwich.bottom=sangwich.bottom,QC=QC,GTindex=GTindex,LD=LD,file.output=file.output,cutOff=cutOff, 
-                        Model.selection = Model.selection)  
+                        Model.selection = Model.selection, Create.indicator = Create.indicator)  
 }# end of loop on trait
 
 if(ncol(Y>2) &file.output)

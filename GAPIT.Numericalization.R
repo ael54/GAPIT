@@ -1,5 +1,5 @@
 `GAPIT.Numericalization` <-
-function(x,bit=2,effect="Add",impute="None"){
+function(x,bit=2,effect="Add",impute="None", Create.indicator = FALSE){
 #Object: To convert character SNP genotpe to numerical
 #Output: Coresponding numerical value
 #Authors: Feng Tian and Zhiwu Zhang

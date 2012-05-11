@@ -11,7 +11,8 @@ function(G=NULL,GD=NULL,GM=NULL,KI=NULL,
   GP = NULL,GK = NULL,GTindex=NULL,  
   bin.size = 1000,inclosure.size = 100,
   sangwich.top=NULL,sangwich.bottom=NULL,
-  file.output=TRUE ){
+  file.output=TRUE,
+  Create.indicator = FALSE){
 #Object: To unify genotype and calculate kinship and PC if required:
 #       1.For G data, convert it to GD and GI
 #       2.For GD and GM data, nothing change 
@@ -113,14 +114,14 @@ if(!needKinPC &SNP.fraction<1)  stop("GAPIT says: You did not require calculate 
 if(!SNP.test & is.null(KI) & !byData & !byFile)  stop("GAPIT says: For SNP.test optioin, please input either use KI or use genotype")
 
 #if(is.null(file.path) & !byData & byFile) stop("GAPIT Ssays: A path for genotype data should be provided!")
-if(is.null(file.total) & !byData & byFile) stop("APIT Ssays: Number of file should be provided: >=1")
-if(!is.null(G) & !is.null(GD)) stop("APIT Ssays: Both hapmap and EMMA format exist, choose one only.")
+if(is.null(file.total) & !byData & byFile) stop("GAPIT Ssays: Number of file should be provided: >=1")
+if(!is.null(G) & !is.null(GD)) stop("GAPIT Ssays: Both hapmap and EMMA format exist, choose one only.")
 
-if(!is.null(file.GD) & is.null(file.GM) & (!is.null(GP)|!is.null(GK)) ) stop("APIT Ssays: Genotype data and map files should be in pair")
-if(is.null(file.GD) & !is.null(file.GM) & (!is.null(GP)|!is.null(GK)) ) stop("APIT Ssays: Genotype data and map files should be in pair")
+if(!is.null(file.GD) & is.null(file.GM) & (!is.null(GP)|!is.null(GK)) ) stop("GAPIT Ssays: Genotype data and map files should be in pair")
+if(is.null(file.GD) & !is.null(file.GM) & (!is.null(GP)|!is.null(GK)) ) stop("GAPIT Ssays: Genotype data and map files should be in pair")
 
-if(!is.null(GD) & is.null(GM) & (is.null(GP)&is.null(GK)) &kinship.algorithm!="SUPER") stop("APIT Says: Genotype data and map files should be in pair")
-if(is.null(GD) & !is.null(GM) & (is.null(GP)&is.null(GK)) &kinship.algorithm!="SUPER") stop("APIT Says: Genotype data and map files should be in pair")
+if(!is.null(GD) & is.null(GM) & (is.null(GP)&is.null(GK)) &kinship.algorithm!="SUPER") stop("GAPIT Says: Genotype data and map files should be in pair")
+if(is.null(GD) & !is.null(GM) & (is.null(GP)&is.null(GK)) &kinship.algorithm!="SUPER") stop("GAPIT Says: Genotype data and map files should be in pair")
 
 
 #if(!byData & !byFile) stop("APIT Ssays: Either genotype data or files should be given!")
@@ -158,7 +159,7 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="Before HapMap")
 
 #Convert HapMap to numerical
 print(paste("Converting genotype...",sep=""))
-hm=GAPIT.HapMap(G,SNP.effect=SNP.effect,SNP.impute=SNP.impute)
+hm=GAPIT.HapMap(G,SNP.effect=SNP.effect,SNP.impute=SNP.impute, Create.indicator = Create.indicator)
 
 Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="after HapMap")
 Memory=GAPIT.Memory(Memory=Memory,Infor="after HapMap")
