@@ -3,7 +3,7 @@ function(ys,xs,K=NULL,Z=NULL,X0=NULL,CVI=NULL,CV.Inheritance=NULL,GI=NULL,GP=NUL
 		file.path=NULL,file.from=NULL,file.to=NULL,file.total=1, genoFormat="Hapmap", file.fragment=NULL,byFile=FALSE,fullGD=TRUE,SNP.fraction=1,
     file.G=NULL,file.Ext.G=NULL,GTindex=NULL,file.GD=NULL, file.GM=NULL, file.Ext.GD=NULL,file.Ext.GM=NULL,
     SNP.P3D=TRUE,Timmer,Memory,optOnly=TRUE,SNP.effect="Add",SNP.impute="Middle", SNP.permutation=FALSE,
-    ngrids=100,llim=-10,ulim=10,esp=1e-10,name.of.trait=NULL, Create.indicator = FALSE   ){
+    ngrids=100,llim=-10,ulim=10,esp=1e-10,name.of.trait=NULL, Create.indicator = FALSE){
 #Object: To esimate variance component by using EMMA algorithm and perform GWAS with P3D/EMMAx
 #Output: ps, REMLs, stats, dfs, vgs, ves, BLUP,  BLUP_Plus_Mean, PEV
 #Authors: Feng Tian, Alex Lipka and Zhiwu Zhang
@@ -386,15 +386,36 @@ for (i in loopStart:mloop){
     }
 
     if(i >0 | file>file.from | frag>1){
-      vids <- !is.na(xs[,i]) #### Feng changed
-      xv <- xs[vids,i]      #### Feng changed
-      vids.TRUE=which(vids==TRUE)
-      vids.FALSE=which(vids==FALSE)
-      ns=length(xv)
-      ss=sum(xv)
+      
+      if(Create.indicator){     #I need create indicators and then calculate the minor allele frequency
+       
+       xv <- GAPIT.Create.Indicator(xs[vids,i], SNP.impute = SNP.impute) 
+       vids <- !is.na(xv[,1]) #### Feng changed
+      
+       vids.TRUE=which(vids==TRUE)
+       vids.FALSE=which(vids==FALSE)
+       ns=nrow(xv)
+       ss=sum(xv[,ncol(xv)])
 
-      maf[i]=min(.5*ss/ns,1-.5*ss/ns)
-      nobs[i]=ns
+       maf[i]=min(ss/ns,1-ss/ns)
+       nobs[i]=ns
+       write.table(xs[vids,i], "DEBUG.xs[vidsi].csv", quote = FALSE, sep = ",", row.names = FALSE,col.names = TRUE)
+       write.table(xv, "DEBUG.xv.csv", quote = FALSE, sep = ",", row.names = FALSE,col.names = TRUE)
+              
+      }
+     
+      if(!Create.indicator){     #### Feng changed
+       xv <- xs[vids,i]  
+       vids <- !is.na(xs[,i]) #### Feng changed
+      
+       vids.TRUE=which(vids==TRUE)
+       vids.FALSE=which(vids==FALSE)
+       ns=length(xv)
+       ss=sum(xv)
+
+       maf[i]=min(.5*ss/ns,1-.5*ss/ns)
+       nobs[i]=ns
+      }
 
      nr <- sum(vids)
      if(i ==1 & file==file.from&frag==1)  {
@@ -488,8 +509,9 @@ for (i in loopStart:mloop){
     	if(i >0 | file>file.from|frag>1){ 
         if(!Create.indicator) X <- cbind(X0[vids, , drop = FALSE], xs[vids,i])
         if(Create.indicator){
-          x.indicator <- GAPIT.Create.Indicator(xs[vids,i])
-          X <- cbind(X0[vids, , drop = FALSE], x.indicator)
+          X <- cbind(X0[vids, , drop = FALSE], xv)
+          print("the head of X for running GWAS is")
+          print(head(X))
         }       
         
       } 

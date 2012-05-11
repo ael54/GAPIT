@@ -10,7 +10,8 @@ function(Y=NULL,G=NULL,GD=NULL,GM=NULL,KI=NULL,Z=NULL,CV=NULL,CV.Inheritance=NUL
                 ngrid = 100, llim = -10, ulim = 10, esp = 1e-10,
                 LD.chromosome=NULL,LD.location=NULL,LD.range=NULL,
                 sangwich.top=NULL,sangwich.bottom=NULL,QC=TRUE,GTindex=NULL,LD=0.01,
-                file.output=TRUE,cutOff=0.01, Model.selection = FALSE,output.numerical = FALSE,output.hapmap = FALSE){
+                file.output=TRUE,cutOff=0.01, Model.selection = FALSE,output.numerical = FALSE,
+                output.hapmap = FALSE, Create.indicator = FALSE){
 GAPIT.Version="2.18 (Separation of Cryptic relationship from population structure)"
 #Object: To perform GWAS and GPS (Genomic Prediction/Selection)
 #Designed by Zhiwu Zhang
@@ -32,7 +33,7 @@ myGenotype<-GAPIT.Genotype(G=G,GD=GD,GM=GM,KI=KI,kinship.algorithm=kinship.algor
                 SNP.MAF=SNP.MAF,FDR.Rate = FDR.Rate,SNP.FDR=SNP.FDR,SNP.effect=SNP.effect,SNP.impute=SNP.impute,
                 LD.chromosome=LD.chromosome,LD.location=LD.location,LD.range=LD.range,
                 GP=GP,GK=GK,bin.size=NULL,inclosure.size=NULL, Timmer = Timmer,Memory=Memory,
-                sangwich.top=sangwich.top,sangwich.bottom=sangwich.bottom,GTindex=NULL,file.output=file.output)
+                sangwich.top=sangwich.top,sangwich.bottom=sangwich.bottom,GTindex=NULL,file.output=file.output, Create.indicator = Create.indicator)
 
 Timmer=myGenotype$Timmer
 Memory=myGenotype$Memory
@@ -84,7 +85,7 @@ gapitMain <- GAPIT.Main(Y=Y[,c(1,trait)],G=G,GD=GD,GM=GM,KI=KI,Z=Z,CV=CV,CV.Inhe
                         LD.chromosome=LD.chromosome,LD.location=LD.location,LD.range=LD.range,SNP.CV=SNP.CV,SNP.robust=SNP.robust,
                         genoFormat=genoFormat,hasGenotype=hasGenotype,byFile=byFile,fullGD=fullGD,PC=PC,GI=GI,Timmer = Timmer, Memory = Memory,
                         sangwich.top=sangwich.top,sangwich.bottom=sangwich.bottom,QC=QC,GTindex=GTindex,LD=LD,file.output=file.output,cutOff=cutOff, 
-                        Model.selection = Model.selection)  
+                        Model.selection = Model.selection, Create.indicator = Create.indicator)  
 }# end of loop on trait
 
 if(ncol(Y>2) &file.output)

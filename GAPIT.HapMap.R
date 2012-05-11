@@ -1,5 +1,5 @@
 `GAPIT.HapMap` <-
-function(G,SNP.effect="Add",SNP.impute="Middle",heading=TRUE){
+function(G,SNP.effect="Add",SNP.impute="Middle",heading=TRUE, Create.indicator = FALSE){
 #Object: To convert character SNP genotpe to numerical
 #Output: Coresponding numerical value
 #Authors: Feng Tian and Zhiwu Zhang
@@ -31,9 +31,11 @@ bit=nchar(as.character(G[2,12])) #to determine number of bits of genotype
 
 print("Perform numericalization")
 if(heading){
-  GD= apply(G[-1,-(1:11)],1,function(one) GAPIT.Numericalization(one,bit=bit,effect=SNP.effect,impute=SNP.impute))
+  if(!Create.indicator) GD= apply(G[-1,-(1:11)],1,function(one) GAPIT.Numericalization(one,bit=bit,effect=SNP.effect,impute=SNP.impute))
+  if(Create.indicator) GD= t(G[-1,-(1:11)])
 }else{
-  GD= apply(G[  ,-(1:11)],1,function(one) GAPIT.Numericalization(one,bit=bit,effect=SNP.effect,impute=SNP.impute))
+  if(!Create.indicator) GD= apply(G[  ,-(1:11)],1,function(one) GAPIT.Numericalization(one,bit=bit,effect=SNP.effect,impute=SNP.impute))
+  if(Create.indicator) GD= t(G[ ,-(1:11)])
 }
 
 #set GT and GI to NULL in case of null GD
@@ -42,7 +44,13 @@ if(is.null(GD)){
   GI=NULL
 }
 
-print(paste("Succesfuly finished converting hampmap which has bits of ", bit,sep=""))
+#print("The dimension of GD is:")
+#print(dim(GD))
+
+#print("The head of the first seven columns of GD is")
+#print(head(GD)[,1:7])
+
+if(!Create.indicator) print(paste("Succesfuly finished converting hampmap which has bits of ", bit,sep=""))
 return(list(GT=GT,GD=GD,GI=GI))
 }#end of GAPIT.HapMap function
 
