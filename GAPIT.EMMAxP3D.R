@@ -43,7 +43,7 @@ if(!is.null(K)) tv=ncol(K)
 #print("Caling emma.eigen.L...")
 if(!is.null(K)) eig.L <- emma.eigen.L(Z, K) #this function handle both NULL Z and non-NULL Z matrix
 
-eig.L$values[eig.L$values<0]=0
+#eig.L$values[eig.L$values<0]=0
 Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="eig.L")
 Memory=GAPIT.Memory(Memory=Memory,Infor="eig.L")
 
@@ -57,7 +57,7 @@ if(is.null(Z)  & !is.null(K)) eig.R <- try(emma.eigen.R.wo.Z(   K, X)) #This wil
 Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="eig.R")
 Memory=GAPIT.Memory(Memory=Memory,Infor="eig.R")
 
-eig.R$values[eig.R$values<0]=0
+#eig.R$values[eig.R$values<0]=0
 print(labels(eig.R))
 print(length(eig.R$values))
 print(dim(eig.R$vectors))
@@ -119,9 +119,9 @@ if(optOnly){
   if(!is.null(K)){
    if(length(which(eig.L$values < 0)) > 0 ){
     print("---------------------------------------------------The group kinship matrix at this compression level is not positive semidefinite. Please select another compression level.---------------------------------------------------")
-           return(list(ps = NULL, REMLs = 999999, stats = NULL, effect.est = NULL, dfs = NULL,maf=NULL,nobs = NULL,Timmer=Timmer,Memory=Memory,
-           vgs = 1.000, ves = 1.000, BLUP = NULL, BLUP_Plus_Mean = NULL,
-           PEV = NULL, BLUE=NULL))
+           #return(list(ps = NULL, REMLs = 999999, stats = NULL, effect.est = NULL, dfs = NULL,maf=NULL,nobs = NULL,Timmer=Timmer,Memory=Memory,
+           #vgs = 1.000, ves = 1.000, BLUP = NULL, BLUP_Plus_Mean = NULL,
+           #PEV = NULL, BLUE=NULL))
     }
   }
   
@@ -225,9 +225,9 @@ if( is.null(Z) & !is.null(K))  eig.full.plus.delta <- as.matrix((eig.L$values + 
 if(!is.null(K)){
 if(length(which(eig.L$values < 0)) > 0 ){
  print("---------------------------------------------------The group kinship matrix at this compression level is not positive semidefinite. Please select another compression level.---------------------------------------------------")
-       return(list(ps = NULL, REMLs = 999999, stats = NULL, effect.est = NULL, dfs = NULL,maf=NULL,nobs = NULL,Timmer=Timmer,Memory=Memory,
-        vgs = 1.000, ves = 1.000, BLUP = NULL, BLUP_Plus_Mean = NULL,
-        PEV = NULL, BLUE=NULL))
+       #return(list(ps = NULL, REMLs = 999999, stats = NULL, effect.est = NULL, dfs = NULL,maf=NULL,nobs = NULL,Timmer=Timmer,Memory=Memory,
+        #vgs = 1.000, ves = 1.000, BLUP = NULL, BLUP_Plus_Mean = NULL,
+        #PEV = NULL, BLUE=NULL))
  }
 }
 

@@ -7,6 +7,8 @@
 
 #Designed by Zhiwu Zhang
 #Writen by Alex Lipka, Feng Tian and Zhiwu Zhang
+#Release date: May 14, 2012
+#Release date: Remove the code for fixing error on singular IXIX
 ################################################################################
 
 `GAPIT.Block` <-
@@ -863,7 +865,7 @@ if(!is.null(K)) tv=ncol(K)
 #print("Caling emma.eigen.L...")
 if(!is.null(K)) eig.L <- emma.eigen.L(Z, K) #this function handle both NULL Z and non-NULL Z matrix
 
-eig.L$values[eig.L$values<0]=0
+#eig.L$values[eig.L$values<0]=0
 Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="eig.L")
 Memory=GAPIT.Memory(Memory=Memory,Infor="eig.L")
 
@@ -877,7 +879,7 @@ if(is.null(Z)  & !is.null(K)) eig.R <- try(emma.eigen.R.wo.Z(   K, X)) #This wil
 Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="eig.R")
 Memory=GAPIT.Memory(Memory=Memory,Infor="eig.R")
 
-eig.R$values[eig.R$values<0]=0
+#eig.R$values[eig.R$values<0]=0
 print(labels(eig.R))
 print(length(eig.R$values))
 print(dim(eig.R$vectors))
@@ -939,9 +941,9 @@ if(optOnly){
   if(!is.null(K)){
    if(length(which(eig.L$values < 0)) > 0 ){
     print("---------------------------------------------------The group kinship matrix at this compression level is not positive semidefinite. Please select another compression level.---------------------------------------------------")
-           return(list(ps = NULL, REMLs = 999999, stats = NULL, effect.est = NULL, dfs = NULL,maf=NULL,nobs = NULL,Timmer=Timmer,Memory=Memory,
-           vgs = 1.000, ves = 1.000, BLUP = NULL, BLUP_Plus_Mean = NULL,
-           PEV = NULL, BLUE=NULL))
+           #return(list(ps = NULL, REMLs = 999999, stats = NULL, effect.est = NULL, dfs = NULL,maf=NULL,nobs = NULL,Timmer=Timmer,Memory=Memory,
+           #vgs = 1.000, ves = 1.000, BLUP = NULL, BLUP_Plus_Mean = NULL,
+           #PEV = NULL, BLUE=NULL))
     }
   }
   
@@ -1045,9 +1047,9 @@ if( is.null(Z) & !is.null(K))  eig.full.plus.delta <- as.matrix((eig.L$values + 
 if(!is.null(K)){
 if(length(which(eig.L$values < 0)) > 0 ){
  print("---------------------------------------------------The group kinship matrix at this compression level is not positive semidefinite. Please select another compression level.---------------------------------------------------")
-       return(list(ps = NULL, REMLs = 999999, stats = NULL, effect.est = NULL, dfs = NULL,maf=NULL,nobs = NULL,Timmer=Timmer,Memory=Memory,
-        vgs = 1.000, ves = 1.000, BLUP = NULL, BLUP_Plus_Mean = NULL,
-        PEV = NULL, BLUE=NULL))
+       #return(list(ps = NULL, REMLs = 999999, stats = NULL, effect.est = NULL, dfs = NULL,maf=NULL,nobs = NULL,Timmer=Timmer,Memory=Memory,
+        #vgs = 1.000, ves = 1.000, BLUP = NULL, BLUP_Plus_Mean = NULL,
+        #PEV = NULL, BLUE=NULL))
  }
 }
 
@@ -4567,122 +4569,6 @@ if(plot.type == "P_values")
 
 }
 
-`GAPIT` <-
-function(Y=NULL,G=NULL,GD=NULL,GM=NULL,KI=NULL,Z=NULL,CV=NULL,CV.Inheritance=NULL,GP=NULL,GK=NULL,
-                group.from=30 ,group.to=1000000,group.by=10,DPP=100000, 
-                kinship.cluster="average", kinship.group='Mean',kinship.algorithm="VanRaden",                                                    
-                bin.from=10000,bin.to=10000,bin.by=10000,inclosure.from=10,inclosure.to=10,inclosure.by=10,
-                SNP.P3D=TRUE,SNP.effect="Add",SNP.impute="Middle",PCA.total=0, SNP.fraction = 1, seed = 123, BINS = 20,SNP.test=TRUE, 
-                SNP.MAF=0,FDR.Rate = 1, SNP.FDR=1,SNP.permutation=FALSE,SNP.CV=NULL,SNP.robust="GLM",                             
-                file.from=1, file.to=1, file.total=NULL, file.fragment = 99999,file.path=NULL, 
-                file.G=NULL, file.Ext.G=NULL,file.GD=NULL, file.GM=NULL, file.Ext.GD=NULL,file.Ext.GM=NULL, 
-                ngrid = 100, llim = -10, ulim = 10, esp = 1e-10,
-                LD.chromosome=NULL,LD.location=NULL,LD.range=NULL,
-                sangwich.top=NULL,sangwich.bottom=NULL,QC=TRUE,GTindex=NULL,LD=0.01,
-                file.output=TRUE,cutOff=0.01, Model.selection = FALSE,output.numerical = FALSE,
-                output.hapmap = FALSE, Create.indicator = FALSE){
-GAPIT.Version="2.18 (Separation of Cryptic relationship from population structure)"
-#Object: To perform GWAS and GPS (Genomic Prediction/Selection)
-#Designed by Zhiwu Zhang
-#Writen by Alex Lipka, Feng Tian and Zhiwu Zhang
-#Last update: October 24, 2011 
-##############################################################################################
-print("--------------------- Welcome to GAPIT ----------------------------")
-echo=TRUE
-
-Timmer=GAPIT.Timmer(Infor="GAPIT")
-Memory=GAPIT.Memory(Infor="GAPIT")
-
-#Genotype processing and calculation Kin and PC
-#First call to genotype to setup genotype data
-
-myGenotype<-GAPIT.Genotype(G=G,GD=GD,GM=GM,KI=KI,kinship.algorithm=kinship.algorithm,PCA.total=PCA.total,SNP.fraction=SNP.fraction,SNP.test=SNP.test,
-                file.path=file.path,file.from=file.from, file.to=file.to, file.total=file.total, file.fragment = file.fragment, file.G=file.G, 
-                file.Ext.G=file.Ext.G,file.GD=file.GD, file.GM=file.GM, file.Ext.GD=file.Ext.GD,file.Ext.GM=file.Ext.GM,
-                SNP.MAF=SNP.MAF,FDR.Rate = FDR.Rate,SNP.FDR=SNP.FDR,SNP.effect=SNP.effect,SNP.impute=SNP.impute,
-                LD.chromosome=LD.chromosome,LD.location=LD.location,LD.range=LD.range,
-                GP=GP,GK=GK,bin.size=NULL,inclosure.size=NULL, Timmer = Timmer,Memory=Memory,
-                sangwich.top=sangwich.top,sangwich.bottom=sangwich.bottom,GTindex=NULL,file.output=file.output, Create.indicator = Create.indicator)
-
-Timmer=myGenotype$Timmer
-Memory=myGenotype$Memory
-
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Genotype for all")
-Memory=GAPIT.Memory(Memory=Memory,Infor="Genotype for all")
-
-
-KI=myGenotype$KI
-PC=myGenotype$PC
-
-genoFormat=myGenotype$genoFormat
-hasGenotype=myGenotype$hasGenotype
-byFile=myGenotype$byFile
-fullGD=myGenotype$fullGD
-GD=myGenotype$GD
-GI=myGenotype$GI
-GT=myGenotype$GT
-G=myGenotype$G
-
-rownames(GD)=GT
-colnames(GD)=GI[,1]
-
-if(output.numerical) write.table(GD,  "GAPIT.Genotype.Numerical.txt", quote = FALSE, sep = "\t", row.names = TRUE,col.names = NA)
-if(output.hapmap) write.table(myGenotype$G,  "GAPIT.Genotype.hmp.txt", quote = FALSE, sep = "\t", row.names = FALSE,col.names = FALSE)
-
-#In case of null Y and null GP, return genotype only  
-if(is.null(Y) & is.null(GP)) return (list(GWAS=NULL,GPS=NULL,Pred=NULL,compression=NULL,kinship.optimum=NULL,kinship=myGenotype$KI,PCA=myGenotype$PC,GD=data.frame(cbind(as.data.frame(GT),as.data.frame(GD))),GI=GI,G=myGenotype$G))
-
-#In case of null Y, return genotype only          
-if(is.null(Y)) return (list(GWAS=NULL,GPS=NULL,Pred=NULL,compression=NULL,kinship.optimum=NULL,kinship=myGenotype$KI,PCA=myGenotype$PC,GD=data.frame(cbind(as.date.frame(GT),as.data.frame(GD))),Gi=GI,G=myGenotype$G))
-
-rm(myGenotype)
-gc()
-
-print("--------------------Processing traits----------------------------------")
-if(!is.null(Y)){
-print("Phenotype provided!")
-if(ncol(Y)<2)  stop ("Phenotype should have taxa name and one trait at least. Please correct phenotype file!")
-
-for (trait in 2: ncol(Y))  {
-print(paste("Processing trait: ",colnames(Y)[trait],sep=""))
-gapitMain <- GAPIT.Main(Y=Y[,c(1,trait)],G=G,GD=GD,GM=GM,KI=KI,Z=Z,CV=CV,CV.Inheritance=CV.Inheritance,GP=GP,GK=GK,SNP.P3D=SNP.P3D,kinship.algorithm=kinship.algorithm,
-                      bin.from=bin.from,bin.to=bin.to,bin.by=bin.by,inclosure.from=inclosure.from,inclosure.to=inclosure.to,inclosure.by=inclosure.by,
-				              group.from=group.from,group.to=group.to,group.by=group.by,kinship.cluster=kinship.cluster,kinship.group=kinship.group,name.of.trait = colnames(Y)[trait],
-                        file.path=file.path,file.from=file.from, file.to=file.to, file.total=file.total, file.fragment = file.fragment, file.G=file.G,file.Ext.G=file.Ext.G,file.GD=file.GD, file.GM=file.GM, file.Ext.GD=file.Ext.GD,file.Ext.GM=file.Ext.GM, 
-                        SNP.MAF= SNP.MAF,FDR.Rate = FDR.Rate,SNP.FDR=SNP.FDR,SNP.effect=SNP.effect,SNP.impute=SNP.impute,PCA.total=PCA.total,GAPIT.Version=GAPIT.Version,
-                        GT=GT, SNP.fraction = SNP.fraction, seed = seed, BINS = BINS,SNP.test=SNP.test,DPP=DPP, SNP.permutation=SNP.permutation,
-                        LD.chromosome=LD.chromosome,LD.location=LD.location,LD.range=LD.range,SNP.CV=SNP.CV,SNP.robust=SNP.robust,
-                        genoFormat=genoFormat,hasGenotype=hasGenotype,byFile=byFile,fullGD=fullGD,PC=PC,GI=GI,Timmer = Timmer, Memory = Memory,
-                        sangwich.top=sangwich.top,sangwich.bottom=sangwich.bottom,QC=QC,GTindex=GTindex,LD=LD,file.output=file.output,cutOff=cutOff, 
-                        Model.selection = Model.selection, Create.indicator = Create.indicator)  
-}# end of loop on trait
-
-if(ncol(Y>2) &file.output)
-{
-Timmer=gapitMain$Timmer
-Memory=gapitMain$Memory
-
-file=paste("GAPIT.", "All",".Timming.csv" ,sep = "")
-write.table(Timmer, file, quote = FALSE, sep = ",", row.names = FALSE,col.names = TRUE)
-
-file=paste("GAPIT.", "All",".Memory.Stage.csv" ,sep = "")
-write.table(Memory, file, quote = FALSE, sep = ",", row.names = FALSE,col.names = TRUE)
-}
-
-if(ncol(Y)==2) {
-h2= as.matrix(as.numeric(as.vector(gapitMain$Compression[,5]))/(as.numeric(as.vector(gapitMain$Compression[,5]))+as.numeric(as.vector(gapitMain$Compression[,6]))),length(gapitMain$Compression[,6]),1)
-colnames(h2)=c("Heritability")
-  print("GAPIT accomplished successfully for single trait. Results are saved. GWAS and GPS are returned!")
-  return (list(GWAS=gapitMain$GWAS,GPS=gapitMain$GPS,Pred=gapitMain$Pred,compression=as.data.frame(cbind(gapitMain$Compression,h2)), kinship.optimum=gapitMain$kinship.optimum,kinship=gapitMain$kinship,PCA=gapitMain$PC))
-}else{
-  print("GAPIT accomplished successfully for multiple traits. Results are saved")
-  return (list(GWAS=NULL,GPS=NULL,Pred=NULL,compression=NULL,kinship.optimum=NULL,kinship=gapitMain$KI,PCA=gapitMain$PC))
-}
-
-}# end ofdetecting null Y
-
-}  #end of GAPIT function
-
 `GAPIT.RemoveDuplicate` <-
 function(Y){
 #Object: NA
@@ -5068,148 +4954,6 @@ write.table(final.table, paste("GAPIT.", name.of.trait, ".GWAS.Results.csv", sep
   
 
 }   #GAPIT.Table ends here
-
-`GAPIT.TDP` <-
-function(Y,CV=NULL,SNP){
-#Object: To perform GWAS and GPS with Trillion Data Points (TDP)
-#Output: GWAS
-#Authors: Zhiwu Zhang
-# Last update: may 9, 2012
-##############################################################################################
-
-
-#Demonstration code to use GAPIT-Genome Association and Prediction Integrated Tool
-#Designed by Zhiwu Zhang
-#Writen by Alex Lipka, Feng Tian and Zhiwu Zhang
-#Last update: September 1, 2011
-
-#Installation of required R package (once for a computer)
-#	source("http://www.bioconductor.org/biocLite.R")
-#	biocLite("multtest")
-#	install.packages("gplots")
-#	install.packages("LDheatmap")
-#	install.packages("genetics")
-#	install.packages("corpcor") 
- 
-#Import library (each time to start R)
-library(multtest)
-library("gplots")
-library("LDheatmap")
-library("genetics")
-#library(MASS)
-#library(corpcor)  
-
-
-
-source("http://www.maizegenetics.net/images/stories/bioinformatics/GAPIT/emma.txt")
-#source("http://www.maizegenetics.net/images/stories/bioinformatics/GAPIT/gapit_functions.txt")
-source("C:\\Current\\RevolutionR\\GAPIT\\gapit_functions.txt")
-
-
-#import data
-setwd("C:\\myGAPIT")
-myY  <- read.table("mdp_traits.txt", head = TRUE)
-
-setwd("C:\\Over50M\\55K")
-myG <- read.delim("SNP55K_maize282_hapmap_20100513b.txt", head = FALSE)
-setwd("C:\\Current\\Paper\\TDP")
-
-myGAPIT=GAPIT(G=myG)
-myGD=myGAPIT$GD
-
-#Edit data
-data=merge(myY[,1:2], myGD, by.x = "Taxa", by.y = "taxa")
-m=ncol(data)-2
-n=nrow(data)
-xnam <- paste("x", 1:m, sep="")
-colnames(data)=c("Taxa","y",xnam)
-#names(data)
-attach(data)
-
-
-p=matrix(0,m,1)
-
-#set QTN set
-#q=floor(sqrt(n))
-q=20
-QTN=1:q
-
-#First iteration
-xnam <- paste("x", QTN, sep="")
-(fmla <- as.formula(paste("y ~ ", paste(xnam, collapse= "+"))))
-myLM=lm(fmla)
-
-i=q
-
-#Loop here
-i=i+1
-
-for(i in (q+1):(m+1) ){
-
-if(floor(i/1000)==i/1000)  print(paste("Current SNP ", i," ",sep=""))
-  
-
-#update QTN
-#least significant QTN
-lms=summary(myLM)
-lms
-
-lmcoef=lms$coefficients
-lmcoef
-
-notNA=!is.na(myLM$coefficients[-1])
-
-QTNRemain=QTN[notNA]
-
-#remove intercept
-lmcoefOnly=lmcoef[-1,]
-
-#update p values for penalty
-#p=matrix(0,m,1)
-
-#Panalty
-index.update=p[QTNRemain]<lmcoefOnly[,4][notNA]
-
-#Reward
-#index.update=p[QTNRemain]>lmcoefOnly[,4][notNA]
-
-p[QTNRemain][    index.update  ]=lmcoefOnly[,4][index.update]
-p[1:100]
-
-
-#Remove least significant
-leastSig=which(lmcoefOnly[,4]==max(lmcoefOnly[,4]))
-#lmcoefSlot=cbind(lmcoefOnly[notNA,],QTNRemain)
-lmcoefSlot=cbind(lmcoefOnly,QTNRemain)
-
-if(length(QTNRemain)>q)
-{ 
-	lmcoefLeft=lmcoefSlot[-leastSig,]
-}else
-{ 
-lmcoefLeft=lmcoefSlot
-}
-
-xnam=rownames(lmcoefLeft)
-QTNLeft=lmcoefLeft[,5]
-
-
-#Next evaluation
-if(i<=m){
-xnam=c(xnam, paste("x",i,sep=""))
-QTN=c(QTNLeft,i)
-(fmla <- as.formula(paste("y ~ ", paste(xnam, collapse= "+"))))
-myLM=lm(fmla)
-}
-
-}#End of loop on SNP
-
-write.table(p,"TDP.txt",row.names=FALSE)
-
-return (list(GWAS=GWAS,Timmer=Timmer,Memory=Memory))
-
-}#The function GAPIT.TDP ends here
-
 
 `GAPIT.Timmer` <-
 function(Timmer=NULL,Infor){

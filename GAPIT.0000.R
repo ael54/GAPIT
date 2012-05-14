@@ -7,5 +7,7 @@
 
 #Designed by Zhiwu Zhang
 #Writen by Alex Lipka, Feng Tian and Zhiwu Zhang
+#Release date: May 14, 2012
+#Release date: Remove the code for fixing error on singular IXIX
 ################################################################################
 
