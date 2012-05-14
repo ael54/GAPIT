@@ -671,8 +671,6 @@ if(SNP.impute == "Major") xs[which(is.na(xs))] = unique.sorted[1]
 if(SNP.impute == "Minor") xs[which(is.na(xs))] = unique.sorted[length(unique.sorted)]
 if(SNP.impute == "Middle") xs[which(is.na(xs))] = unique.sorted[2]
 x.ind <- NULL
-
-
 for(i in unique.sorted){
  x.col <- rep(NA, length(xs))
  x.col[which(xs==i)] <- 1
@@ -1218,6 +1216,7 @@ for (i in loopStart:mloop){
        vids.FALSE=which(vids==FALSE)
        ns=nrow(xv)
        ss=sum(xv[,ncol(xv)])
+
        maf[i]=min(ss/ns,1-ss/ns)
        nobs[i]=ns
        write.table(xs[vids,i], "DEBUG.xs[vidsi].csv", quote = FALSE, sep = ",", row.names = FALSE,col.names = TRUE)
@@ -2722,8 +2721,10 @@ if(is.null(GD)){
 
 #print("The dimension of GD is:")
 #print(dim(GD))
+
 #print("The head of the first seven columns of GD is")
 #print(head(GD)[,1:7])
+
 if(!Create.indicator) print(paste("Succesfuly finished converting hampmap which has bits of ", bit,sep=""))
 return(list(GT=GT,GD=GD,GI=GI))
 }#end of GAPIT.HapMap function
@@ -3301,6 +3302,7 @@ print("It made it to here")
 print("The dimension of xs is:")
 print("The value of SNP.impute is")
 print(SNP.impute)
+
 print(dim(as.matrix(as.data.frame(GD[GTindex,colInclude]))))
 p3d <- GAPIT.EMMAxP3D(ys=ys,xs=as.matrix(as.data.frame(GD[GTindex,colInclude])),K = as.matrix(bk$KW) ,Z=matrix(as.numeric(as.matrix(zc$Z[,-1])),nrow=zrow,ncol=zcol),X0=X0,CVI=CVI,CV.Inheritance=CV.Inheritance,GI=GI,SNP.P3D=SNP.P3D,Timmer=Timmer,Memory=Memory,fullGD=fullGD,
         SNP.permutation=SNP.permutation, GP=GP,
@@ -5075,29 +5077,134 @@ function(Y,CV=NULL,SNP){
 # Last update: may 9, 2012
 ##############################################################################################
 
-mydataPath="C:\\myGAPIT\\"
-myY  <- read.table(paste(mydataPath,"mdp_traits.txt",sep=""), head = TRUE)
-myGD <- read.table(paste(mydataPath,"X_3122_SNPs.txt",sep=""), head = TRUE)
-data=merge(myY[,1:2], myGD, by.x = "Taxa", by.y = "Taxa")
+
+#Demonstration code to use GAPIT-Genome Association and Prediction Integrated Tool
+#Designed by Zhiwu Zhang
+#Writen by Alex Lipka, Feng Tian and Zhiwu Zhang
+#Last update: September 1, 2011
+
+#Installation of required R package (once for a computer)
+#	source("http://www.bioconductor.org/biocLite.R")
+#	biocLite("multtest")
+#	install.packages("gplots")
+#	install.packages("LDheatmap")
+#	install.packages("genetics")
+#	install.packages("corpcor") 
+ 
+#Import library (each time to start R)
+library(multtest)
+library("gplots")
+library("LDheatmap")
+library("genetics")
+#library(MASS)
+#library(corpcor)  
+
+
+
+source("http://www.maizegenetics.net/images/stories/bioinformatics/GAPIT/emma.txt")
+#source("http://www.maizegenetics.net/images/stories/bioinformatics/GAPIT/gapit_functions.txt")
+source("C:\\Current\\RevolutionR\\GAPIT\\gapit_functions.txt")
+
+
+#import data
+setwd("C:\\myGAPIT")
+myY  <- read.table("mdp_traits.txt", head = TRUE)
+
+setwd("C:\\Over50M\\55K")
+myG <- read.delim("SNP55K_maize282_hapmap_20100513b.txt", head = FALSE)
+setwd("C:\\Current\\Paper\\TDP")
+
+myGAPIT=GAPIT(G=myG)
+myGD=myGAPIT$GD
+
+#Edit data
+data=merge(myY[,1:2], myGD, by.x = "Taxa", by.y = "taxa")
 m=ncol(data)-2
-n=nrow(data)-2
+n=nrow(data)
 xnam <- paste("x", 1:m, sep="")
 colnames(data)=c("Taxa","y",xnam)
+#names(data)
+attach(data)
 
-q=floor(sqrt(n))
 
-xnam <- paste("x", 1:m, sep="")
+p=matrix(0,m,1)
+
+#set QTN set
+#q=floor(sqrt(n))
+q=20
+QTN=1:q
+
+#First iteration
+xnam <- paste("x", QTN, sep="")
 (fmla <- as.formula(paste("y ~ ", paste(xnam, collapse= "+"))))
 myLM=lm(fmla)
 
+i=q
 
-names(myY)
-attach(myY)
+#Loop here
+i=i+1
 
-myLM=lm(data[,2]~data[,3]:data[,54])
-myLM3=lm(data[,2]~data[,3])
-myLM54=lm(data[,2]~data[,54])
+for(i in (q+1):(m+1) ){
 
+if(floor(i/1000)==i/1000)  print(paste("Current SNP ", i," ",sep=""))
+  
+
+#update QTN
+#least significant QTN
+lms=summary(myLM)
+lms
+
+lmcoef=lms$coefficients
+lmcoef
+
+notNA=!is.na(myLM$coefficients[-1])
+
+QTNRemain=QTN[notNA]
+
+#remove intercept
+lmcoefOnly=lmcoef[-1,]
+
+#update p values for penalty
+#p=matrix(0,m,1)
+
+#Panalty
+index.update=p[QTNRemain]<lmcoefOnly[,4][notNA]
+
+#Reward
+#index.update=p[QTNRemain]>lmcoefOnly[,4][notNA]
+
+p[QTNRemain][    index.update  ]=lmcoefOnly[,4][index.update]
+p[1:100]
+
+
+#Remove least significant
+leastSig=which(lmcoefOnly[,4]==max(lmcoefOnly[,4]))
+#lmcoefSlot=cbind(lmcoefOnly[notNA,],QTNRemain)
+lmcoefSlot=cbind(lmcoefOnly,QTNRemain)
+
+if(length(QTNRemain)>q)
+{ 
+	lmcoefLeft=lmcoefSlot[-leastSig,]
+}else
+{ 
+lmcoefLeft=lmcoefSlot
+}
+
+xnam=rownames(lmcoefLeft)
+QTNLeft=lmcoefLeft[,5]
+
+
+#Next evaluation
+if(i<=m){
+xnam=c(xnam, paste("x",i,sep=""))
+QTN=c(QTNLeft,i)
+(fmla <- as.formula(paste("y ~ ", paste(xnam, collapse= "+"))))
+myLM=lm(fmla)
+}
+
+}#End of loop on SNP
+
+write.table(p,"TDP.txt",row.names=FALSE)
 
 return (list(GWAS=GWAS,Timmer=Timmer,Memory=Memory))
 
