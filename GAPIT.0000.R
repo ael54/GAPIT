@@ -1,3 +1,5 @@
+`GAPIT.0000` <-
+function(){
 ################################################################################
 #GAPIT: Genome Association and Prediction Integrated Tool
 #This is an R package that performs Genome Wide Association Study (GWAS) and 
@@ -7,7 +9,9 @@
 
 #Designed by Zhiwu Zhang
 #Writen by Alex Lipka, Feng Tian and Zhiwu Zhang
-#Release date: May 14, 2012
-#Release date: Remove the code for fixing error on singular IXIX
+GAPIT.Version="2.19, May 14, 2012 (Splite the big file into individual function files and other minor chages)"
+return(GAPIT.Version)
+}
+
 ################################################################################
 

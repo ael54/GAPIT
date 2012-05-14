@@ -12,7 +12,6 @@ function(Y=NULL,G=NULL,GD=NULL,GM=NULL,KI=NULL,Z=NULL,CV=NULL,CV.Inheritance=NUL
                 sangwich.top=NULL,sangwich.bottom=NULL,QC=TRUE,GTindex=NULL,LD=0.01,
                 file.output=TRUE,cutOff=0.01, Model.selection = FALSE,output.numerical = FALSE,
                 output.hapmap = FALSE, Create.indicator = FALSE){
-GAPIT.Version="2.18 (Separation of Cryptic relationship from population structure)"
 #Object: To perform GWAS and GPS (Genomic Prediction/Selection)
 #Designed by Zhiwu Zhang
 #Writen by Alex Lipka, Feng Tian and Zhiwu Zhang
@@ -20,6 +19,7 @@ GAPIT.Version="2.18 (Separation of Cryptic relationship from population structur
 ##############################################################################################
 print("--------------------- Welcome to GAPIT ----------------------------")
 echo=TRUE
+GAPIT.Version=GAPIT.0000()
 
 Timmer=GAPIT.Timmer(Infor="GAPIT")
 Memory=GAPIT.Memory(Infor="GAPIT")
