@@ -99,7 +99,7 @@ if(kinship.algorithm=="None" )
 print(dim(GM))
 print(length(theTDP$p))
 
-theGWAS=cbind(GM,theTDP$p)	
+theGWAS=cbind(GM,theTDP$p,NA,NA,NA)	
 
 return (list(Compression=NULL,kinship.optimum=NULL, kinship=NULL,PC=NULL,GWAS=theGWAS, GPS=NULL,Pred=NULL,REMLs=NULL,Timmer=Timmer,Memory=Memory))
 
