@@ -96,7 +96,12 @@ if(QC)
 if(kinship.algorithm=="None" )
 {
 	theTDP=GAPIT.TDP(Y=Y,CV=CV,SNP=as.matrix(as.data.frame(GD[GTindex,])))
-return (list(Compression=NULL,kinship.optimum=NULL, kinship=NULL,PC=NULL,GWAS=theTDP$GWAS, GPS=NULL,Pred=NULL,REMLs=NULL,Timmer=Timmer,Memory=Memory))
+print(dim(GM))
+print(length(theTDP$p))
+
+theGWAS=cbind(GM,theTDP$p)	
+
+return (list(Compression=NULL,kinship.optimum=NULL, kinship=NULL,PC=NULL,GWAS=theGWAS, GPS=NULL,Pred=NULL,REMLs=NULL,Timmer=Timmer,Memory=Memory))
 
 }
 
