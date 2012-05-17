@@ -10,7 +10,8 @@ function(Y,G=NULL,GD=NULL,GM=NULL,KI=NULL,Z=NULL,CV=NULL,CV.Inheritance=NULL,SNP
                 SNP.permutation=FALSE,SNP.CV=NULL,
                 genoFormat=NULL,hasGenotype=NULL,byFile=NULL,fullGD=NULL,PC=NULL,GI=NULL, Timmer = NULL, Memory = NULL,
                 sangwich.top=NULL,sangwich.bottom=NULL,QC=TRUE,GTindex=NULL,LD=0.05,
-                file.output=TRUE,cutOff=0.01, Model.selection = FALSE, Create.indicator = FALSE){
+                file.output=TRUE,cutOff=0.01, Model.selection = FALSE, Create.indicator = FALSE,
+				QTN=NULL, QTN.round=1,QTN.limit=0, QTN.update=TRUE, QTN.method="Penalty"){
 #Object: To perform GWAS and GPS (Genomic Prediction or Selection)
 #Output: GWAS table (text file), QQ plot (PDF), Manhattan plot (PDF), genomic prediction (text file), and
 #        genetic and residual variance components
@@ -95,7 +96,8 @@ if(QC)
 
 if(kinship.algorithm=="None" )
 {
-	theTDP=GAPIT.TDP(Y=Y,CV=CV,SNP=as.matrix(as.data.frame(GD[GTindex,])))
+	theTDP=GAPIT.TDP(Y=Y,CV=CV,SNP=as.matrix(as.data.frame(GD[GTindex,])),
+			QTN=QTN, Round=QTN.round,QTN.limit=QTN.limit, QTN.update=QTN.update, Method=QTN.method)
 print(dim(GM))
 print(length(theTDP$p))
 

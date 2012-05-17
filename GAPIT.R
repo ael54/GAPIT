@@ -11,7 +11,8 @@ function(Y=NULL,G=NULL,GD=NULL,GM=NULL,KI=NULL,Z=NULL,CV=NULL,CV.Inheritance=NUL
                 LD.chromosome=NULL,LD.location=NULL,LD.range=NULL,
                 sangwich.top=NULL,sangwich.bottom=NULL,QC=TRUE,GTindex=NULL,LD=0.01,
                 file.output=TRUE,cutOff=0.01, Model.selection = FALSE,output.numerical = FALSE,
-                output.hapmap = FALSE, Create.indicator = FALSE){
+                output.hapmap = FALSE, Create.indicator = FALSE,
+				QTN=NULL, QTN.round=1,QTN.limit=0, QTN.update=TRUE, QTN.method="Penalty"){
 #Object: To perform GWAS and GPS (Genomic Prediction/Selection)
 #Designed by Zhiwu Zhang
 #Writen by Alex Lipka, Feng Tian and Zhiwu Zhang
@@ -85,7 +86,8 @@ gapitMain <- GAPIT.Main(Y=Y[,c(1,trait)],G=G,GD=GD,GM=GM,KI=KI,Z=Z,CV=CV,CV.Inhe
                         LD.chromosome=LD.chromosome,LD.location=LD.location,LD.range=LD.range,SNP.CV=SNP.CV,SNP.robust=SNP.robust,
                         genoFormat=genoFormat,hasGenotype=hasGenotype,byFile=byFile,fullGD=fullGD,PC=PC,GI=GI,Timmer = Timmer, Memory = Memory,
                         sangwich.top=sangwich.top,sangwich.bottom=sangwich.bottom,QC=QC,GTindex=GTindex,LD=LD,file.output=file.output,cutOff=cutOff, 
-                        Model.selection = Model.selection, Create.indicator = Create.indicator)  
+                        Model.selection = Model.selection, Create.indicator = Create.indicator,
+						QTN=QTN, QTN.round=QTN.round,QTN.limit=QTN.limit, QTN.update=QTN.update, QTN.method=QTN.method)  
 }# end of loop on trait
 
 if(ncol(Y>2) &file.output)
