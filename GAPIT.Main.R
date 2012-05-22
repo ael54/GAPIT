@@ -96,7 +96,11 @@ if(QC)
 
 if(kinship.algorithm=="None" )
 {
-	theTDP=GAPIT.TDP(Y=Y,CV=CV,SNP=as.matrix(as.data.frame(GD[GTindex,])),
+	print("Debug CV")
+	print(CV)
+	if(min(CV[,2])==max(CV[,2])) CV=NULL
+	
+	theTDP=GAPIT.TDP(Y=Y,CV=CV,SNP=as.data.frame(cbind(GT[GTindex],as.matrix(as.data.frame(GD[GTindex,])))),
 			QTN=QTN, Round=QTN.round,QTN.limit=QTN.limit, QTN.update=QTN.update, Method=QTN.method)
 print(dim(GM))
 print(length(theTDP$p))
