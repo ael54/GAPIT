@@ -96,8 +96,6 @@ if(QC)
 
 if(kinship.algorithm=="None" )
 {
-	print("Debug CV")
-	print(CV)
 	if(min(CV[,2])==max(CV[,2])) CV=NULL
 	
 	theTDP=GAPIT.TDP(Y=Y,CV=CV,SNP=as.data.frame(cbind(GT[GTindex],as.matrix(as.data.frame(GD[GTindex,])))),
