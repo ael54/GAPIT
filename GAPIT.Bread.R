@@ -27,8 +27,8 @@ if(method=="GLM"){
   KI=KI,
   GD=GD,
   GM=GM,
-  group.from=5,			
-  group.to=5,
+  group.from=0,			
+  group.to=0,
   QC=FALSE,
   GTindex=GTindex				
   )
@@ -86,8 +86,6 @@ if(method=="CMLM"){
   vg=myGAPIT$vg
   ve=myGAPIT$ve
 }
-
-
 
 #Performing first screening with FaST-LMM
 if(method=="FaST" | method=="SUPER"| method=="DC")

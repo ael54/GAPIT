@@ -94,6 +94,7 @@ if(QC)
   if(noCV)CVI=qc$CV
 }
 
+#TDP
 if(kinship.algorithm=="None" )
 {
 	if(min(CV[,2])==max(CV[,2])) CV=NULL
@@ -118,7 +119,7 @@ gc()
 Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="QC")
 Memory=GAPIT.Memory(Memory=Memory,Infor="QC")
 
-
+#Get indicator of sangwich top and bottom
 byPass.top=FALSE
 byPass=FALSE
 #if(!is.null(sangwich.bottom)) byPass=((sangwich.bottom=="FaST" | sangwich.bottom=="SUPER" | sangwich.bottom=="DC" )& is.null(GP)   )
@@ -140,6 +141,7 @@ if(!is.null(sangwich.top) & is.null(GP))
 {
 print("-------------------Sandwich top bun-----------------------------------")
 
+#Create GK if not provided
   if(is.null(GK)){
     set.seed(1)
     nY=floor(nrow(Y)*.9)
@@ -180,16 +182,21 @@ if(!is.null(CV)& group.from<1) {
   group.from=1 #minimum of group is number of columns in CV
   warning("The lower bound of groups should be 1 at least. It was set to 1!")
 }
-  
+print("debug KI")
+print(dim(KI))  
+nk=1000000000
+if(!is.null(KI)) nk=min(nk,nrow(KI))
+if(!is.null(GK)) nk=min(nk,nrow(GK))
+
 if(!is.null(KI))
 {
-  if(group.to>nrow(KI)) {
+  if(group.to>nk) {
     #group.to=min(nrow(KI),length(GTindex)) #maximum of group is number of rows in KI
-    group.to=min(nrow(KI) ) #maximum of group is number of rows in KI
+    group.to=nk #maximum of group is number of rows in KI
     warning("The upper bound of groups is too high. It was set to the size of kinship!") 
   }
-	if(group.from>nrow(KI)){ 
-    group.from=nrow(KI)
+	if(group.from>nk){ 
+    group.from=nk
     warning("The lower bound of groups is too high. It was set to the size of kinship!") 
   } 
 }
@@ -262,6 +269,9 @@ if(!byPass & (!is.null(GK) | !is.null(GP)))
   Memory=myGenotype$Memory
 
   KI=myGenotype$KI
+#update group set by new KI
+  nk=nrow(KI)
+GROUP=GROUP[GROUP<=nk]
 }
 
 for (ca in kinship.cluster){
@@ -294,7 +304,12 @@ if(!byPass)
 if(count==1)print("-------Mixed model with Kinship-----------------------------")
 if(group<ncol(X0)+1) group=1 # the emma function (emma.delta.REML.dLL.w.Z) does not allow K has dim less then CV. turn to GLM (group=1)
   
-#print("Compressing...")
+print("Debug")
+print("Compressing...")
+print(dim(KI))
+print((ca))
+print((kt))
+print((group))
 cp <- GAPIT.Compress(KI=KI,kinship.cluster=ca,kinship.group=kt,GN=group,Timmer=Timmer,Memory=Memory)
 Timmer=cp$Timmer
 Memory=cp$Memory
@@ -302,7 +317,7 @@ Memory=cp$Memory
 Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="PreP3D 2_cp")
 Memory=GAPIT.Memory(Memory=Memory,Infor="PreP3D 2_cp")
 
-#print("BK...")
+print("BK...")
 bk <- GAPIT.Block(Z=Z,GA=cp$GA,KG=cp$KG)
 
 Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="PreP3D 2_bk")
@@ -408,7 +423,6 @@ if(!is.null(GP))
   SNPVar=apply(as.matrix(GK),2,var)
   GK=GK[,SNPVar>0]
   GK=cbind(as.data.frame(GT[GTindex]),as.data.frame(GK)) #add taxa
-
 
   #GP=NULL
 }# end of if(is.null(GK)) 
@@ -583,7 +597,7 @@ if(numSetting==1)
   
 #Perform GWAS with the optimum setting
 #This section is omited if there is only one setting
-if((numSetting>1) | Model.selection) {
+if((numSetting>1)| (!is.null(sangwich.bottom)&!byPass) | Model.selection) {
   print("Genomic screening..." )
   
 optOnly=FALSE  #set default to false and change it to TRUE in these situations:
@@ -614,7 +628,13 @@ print("--------------  Sandwich bottom with raw burger------------------------")
 
  if(Model.selection == FALSE){
   #update KI with the best likelihood
-  KI=KI.save
+  if(is.null(sangwich.bottom)) KI=KI.save
+
+print("Debug")
+print(dim(KI))
+print(ca)
+print(group)
+print(kt)
 
   cp <- GAPIT.Compress(KI=KI,kinship.cluster=ca,kinship.group=kt,GN=group,Timmer=Timmer,Memory=Memory)
   Timmer=cp$Timmer
