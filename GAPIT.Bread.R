@@ -113,4 +113,3 @@ GWAS=cbind(GM,mySUPERFaST$ps,mySUPERFaST$stats,mySUPERFaST$dfs,mySUPERFaST$effec
 #print("GAPIT.Bread succeed!")  
 return (list(GWAS=GWAS, GPS=GPS,REMLs=REMLs,vg=vg,ve=ve,delta=delta))
 } #end of GAPIT.Bread
-

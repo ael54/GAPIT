@@ -464,7 +464,6 @@ print(Compression[count,])
 #print("---------------SUPER 2nd stage: calculating LL ------------------------")
 
 
-
 }   # end of if(byPass)
 
 }#end of for (ca in kinship.cluster)
