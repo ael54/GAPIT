@@ -3,7 +3,7 @@ function(ys,xs,K=NULL,Z=NULL,X0=NULL,CVI=NULL,CV.Inheritance=NULL,GI=NULL,GP=NUL
 		file.path=NULL,file.from=NULL,file.to=NULL,file.total=1, genoFormat="Hapmap", file.fragment=NULL,byFile=FALSE,fullGD=TRUE,SNP.fraction=1,
     file.G=NULL,file.Ext.G=NULL,GTindex=NULL,file.GD=NULL, file.GM=NULL, file.Ext.GD=NULL,file.Ext.GM=NULL,
     SNP.P3D=TRUE,Timmer,Memory,optOnly=TRUE,SNP.effect="Add",SNP.impute="Middle", SNP.permutation=FALSE,
-    ngrids=100,llim=-10,ulim=10,esp=1e-10,name.of.trait=NULL, Create.indicator = FALSE){
+    ngrids=100,llim=-10,ulim=10,esp=1e-10,name.of.trait=NULL, Create.indicator = FALSE, Major.allele.zero = FALSE){
 #Object: To esimate variance component by using EMMA algorithm and perform GWAS with P3D/EMMAx
 #Output: ps, REMLs, stats, dfs, vgs, ves, BLUP,  BLUP_Plus_Mean, PEV
 #Authors: Feng Tian, Alex Lipka and Zhiwu Zhang
@@ -15,6 +15,14 @@ function(ys,xs,K=NULL,Z=NULL,X0=NULL,CVI=NULL,CV.Inheritance=NULL,GI=NULL,GP=NUL
 #print("EMMAxP3D started...")
 Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="P3D Start")
 Memory=GAPIT.Memory(Memory=Memory,Infor="P3D Start")
+
+
+#When numeric genotypes are selected, impute the missing SNPs with the allele indicated by the "SNP.impute" value
+if(!optOnly){
+ if(SNP.impute == "Major") xs[which(is.na(xs))] = 2
+ if(SNP.impute == "Minor") xs[which(is.na(xs))] = 0
+ if(SNP.impute == "Middle") xs[which(is.na(xs))] = 1
+}
 
 
 #--------------------------------------------------------------------------------------------------------------------<
@@ -58,9 +66,9 @@ Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="eig.R")
 Memory=GAPIT.Memory(Memory=Memory,Infor="eig.R")
 
 #eig.R$values[eig.R$values<0]=0
-print(labels(eig.R))
-print(length(eig.R$values))
-print(dim(eig.R$vectors))
+#print(labels(eig.R))
+#print(length(eig.R$values))
+#print(dim(eig.R$vectors))
 #print("emma.eigen.R.w.Z called!!!")
 #Handler of error in emma
 
@@ -168,7 +176,7 @@ if(optOnly){
        iXX <- solve(crossprod(X,X))
        XY = crossprod(X,yv)
       }
-      beta <- crossprod(iXX,XY) #Note: we can use crossprod here becase iXX is symmetric
+      beta <- crossprod(iXX,XY) #Note: we can use crossprod here because iXX is symmetric
 
       X.beta <- X%*%beta
 
@@ -235,7 +243,7 @@ if(length(which(eig.L$values < 0)) > 0 ){
 Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="U Matrix")
 Memory=GAPIT.Memory(Memory=Memory,Infor="U Matrix")
 
-rm(eig.L)
+if(SNP.P3D == TRUE)rm(eig.L)
 gc()
 
 Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="eig.L removed")
@@ -295,7 +303,8 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="Read file fragment")
 
     myFRG=GAPIT.Fragment( file.path=file.path,  file.total=file.total,file.G=file.G,file.Ext.G=file.Ext.G,
                           seed=seed,SNP.fraction=SNP.fraction,SNP.effect=SNP.effect,SNP.impute=SNP.impute,genoFormat=genoFormat,
-                          file.GD=file.GD,file.Ext.GD=file.Ext.GD,file.GM=file.GM,file.Ext.GM=file.Ext.GM,file.fragment=file.fragment,file=file,frag=frag)
+                          file.GD=file.GD,file.Ext.GD=file.Ext.GD,file.GM=file.GM,file.Ext.GM=file.Ext.GM,file.fragment=file.fragment,file=file,frag=frag, 
+                           Create.indicator = Create.indicator, Major.allele.zero = Major.allele.zero)
 
 Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Genotype file converted")
 Memory=GAPIT.Memory(Memory=Memory,Infor="Genotype file converted")
@@ -325,13 +334,21 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="Genotype file converted")
 
   if(fullGD)numSNP=0  #force to end the while loop
 
-
 #Skip REML if xs is from a empty fragment file
 if(!is.null(xs))  {
 
-
-
+                
   if(is.null(dim(xs)) || nrow(xs) == 1)  xs <- matrix(xs, length(xs),1)
+  
+  xs <- as.matrix(xs)
+  
+    if(length(which(is.na(xs)))>0){    #for the case where fragments are read in
+     if(SNP.impute == "Major") xs[which(is.na(xs))] = 2
+     if(SNP.impute == "Minor") xs[which(is.na(xs))] = 0
+     if(SNP.impute == "Middle") xs[which(is.na(xs))] = 1
+    }
+
+  
   m <- ncol(xs) #number of SNPs
   t <- nrow(xs) #number of individuals
 
@@ -353,7 +370,8 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="After cleaning")
 
   dfs <- matrix(nrow = m, ncol = g)
   stats <- matrix(nrow = m, ncol = g)
-  effect.est <- matrix(nrow = m, ncol = g)
+  if(!Create.indicator) effect.est <- matrix(nrow = m, ncol = g)
+  if(Create.indicator) effect.est <- NULL
   ps <- matrix(nrow = m, ncol = g)
   nobs <- matrix(nrow = m, ncol = g)
   maf <- matrix(nrow = m, ncol = g)
@@ -377,19 +395,56 @@ for (i in loopStart:mloop){
 #--------------------------------------------------------------------------------------------------------------------<
     normalCase=TRUE
 
-    if((i >0)&(floor(i/1000)==i/1000))  print(paste("Genotype file: ", file,", SNP: ",i," ",sep=""))
+    if((i >0)&(floor(i/1000)==i/1000)) print(paste("Genotype file: ", file,", SNP: ",i," ",sep=""))
     # To extract current snp. It save computation for next one in case they are identical
     if(i ==0&file==file.from&frag==1){
       #For the model without fitting SNP
       vids <- !is.na(ys[j,]) #### Feng changed
-      xv <- ys[j, vids]*0+1      #### Feng changed
+      xv <- ys[j, vids]*0+1 #### Feng changed
     }
 
     if(i >0 | file>file.from | frag>1){
+      if(Create.indicator){ #I need create indicators and then calculate the minor allele frequency
+       condition.temp <- unique(xs[vids,i])
+       #Define what a bit is
+       
+       bit=nchar(as.character(xs[vids[1],i]))
+       
+       #Expand on the "which" statement below to include all instances of missing data
+       
+       if(bit==1)  condition <-  condition.temp[-which(condition.temp == "N")]
+       if(bit==2)  condition <-  condition.temp[-which(condition.temp == "NN")]
+       
+       #print("condition.temp is ")
+       #print(condition.temp)
+                                                                                                                        
+       #print("condition is")
+       #print(condition)
+       
+       #print(paste("The value of i is ", i, sep = "")) 
+        
+       
+       if(length(condition) <= 1){
+        dfs[i, ] <- rep(NA, g)
+        stats[i, ] <- rep(NA, g)
+        effect.est <- rbind(effect.est, c(i,rep(NA, g), rep(NA, g)))
+        ps[i, ] = rep(1, g)
+        rsquare[i, ] <- rep(NA,g)
+        rsquare_base[i, ]<-rep(NA,g)
+        maf[i, ] <- rep(0, g)
+        normalCase=FALSE
+        x.prev= vector(length = 0)
+       }
+       
+       }
+       if(normalCase){
+       #print("The head of xs[vids,i] is")
+       #print(head(xs[vids,i]))
       
       if(Create.indicator){     #I need create indicators and then calculate the minor allele frequency
        
-       xv <- GAPIT.Create.Indicator(xs[vids,i], SNP.impute = SNP.impute) 
+       indicator <-  GAPIT.Create.Indicator(xs[vids,i], SNP.impute = SNP.impute)
+       xv <- indicator$x.ind
        vids <- !is.na(xv[,1]) #### Feng changed
       
        vids.TRUE=which(vids==TRUE)
@@ -399,13 +454,20 @@ for (i in loopStart:mloop){
 
        maf[i]=min(ss/ns,1-ss/ns)
        nobs[i]=ns
-       write.table(xs[vids,i], "DEBUG.xs[vidsi].csv", quote = FALSE, sep = ",", row.names = FALSE,col.names = TRUE)
-       write.table(xv, "DEBUG.xv.csv", quote = FALSE, sep = ",", row.names = FALSE,col.names = TRUE)
-              
+        #if(i == 1) write.table(xs[vids,i], "DEBUG.xs[vidsi].csv", quote = FALSE, sep = ",", row.names = FALSE,col.names = TRUE)
+        #if(i == 1) write.table(xv, "DEBUG.xv.csv", quote = FALSE, sep = ",", row.names = FALSE,col.names = TRUE)
+       
+        q1 <- q0 + ncol(xv)    # This is done so that parameter estimates for all indicator variables are included
+
+       
+        #These two matrices need to be reinitiated for each SNP.
+        Xt <- matrix(NA,nr, q1)
+        iXX=matrix(NA,q1,q1)
+       }       
       }
      
-      if(!Create.indicator){     #### Feng changed
-       xv <- xs[vids,i]  
+      if(!Create.indicator){ #### Feng changed
+       xv <- xs[vids,i]
        vids <- !is.na(xs[,i]) #### Feng changed
       
        vids.TRUE=which(vids==TRUE)
@@ -418,7 +480,7 @@ for (i in loopStart:mloop){
       }
 
      nr <- sum(vids)
-     if(i ==1 & file==file.from&frag==1)  {
+     if(i ==1 & file==file.from&frag==1 & !Create.indicator) {
        Xt <- matrix(NA,nr, q1)
        iXX=matrix(NA,q1,q1)
      }
@@ -426,11 +488,12 @@ for (i in loopStart:mloop){
     }
 
     #Situation of no variation for SNP except the fisrt one(synthetic for EMMAx/P3D)
-    if((min(xv) ==max(xv) )& (i >0 | file>file.from |frag>1))
+    if((min(xv) == max(xv)) & (i >0 | file>file.from |frag>1))
     {
       dfs[i, ] <- rep(NA, g)
       stats[i, ] <- rep(NA, g)
-      effect.est[i,] <- rep(NA, g)
+      if(!Create.indicator) effect.est[i,] <- rep(NA, g)
+      if(Create.indicator) effect.est <- rbind(effect.est, c(i,rep(NA, g),rep(NA, g)))
       ps[i, ] = rep(1, g)
       rsquare[i, ] <- rep(NA,g)
       rsquare_base[i, ]<-rep(NA,g)
@@ -440,7 +503,8 @@ for (i in loopStart:mloop){
       if(i >1 | file>file.from | frag>1){
         dfs[i, ] <- dfs[i - 1, ]
         stats[i, ] <- stats[i - 1, ]
-        effect.est[i, ] <- effect.est[i - 1, ]
+        if(!Create.indicator) effect.est[i, ] <- effect.est[i - 1, ]
+        if(Create.indicator) effect.est <- rbind(effect.est, c(i, rep(NA, g), rep(NA, g))) #If the previous SNP is idnetical, indicate this by "NA"
         ps[i, ] <- ps[i - 1, ]
         rsquare[i, ] <- rsquare[i - 1, ]
         rsquare_base[i, ] <-rsquare_base[i - 1, ]
@@ -476,8 +540,8 @@ for (i in loopStart:mloop){
 
 
    #logL0 <- 0.5*((-nrow(as.matrix(ys[!is.na(ys)])))*log(((2*pi)/nrow(ys))
-   #              *crossprod(((as.matrix(ys[!is.na(ys)]))-X.int.beta.int),((as.matrix(ys[!is.na(ys)]))-X.int.beta.int)))
-   #               -nrow(as.matrix(ys[!is.na(ys)])))
+   # *crossprod(((as.matrix(ys[!is.na(ys)]))-X.int.beta.int),((as.matrix(ys[!is.na(ys)]))-X.int.beta.int)))
+   # -nrow(as.matrix(ys[!is.na(ys)])))
 
     #print(paste("The value of logL0 inside of the calculating SNPs loop is", logL0, sep = ""))
    }
@@ -510,8 +574,8 @@ for (i in loopStart:mloop){
         if(!Create.indicator) X <- cbind(X0[vids, , drop = FALSE], xs[vids,i])
         if(Create.indicator){
           X <- cbind(X0[vids, , drop = FALSE], xv)
-          print("the head of X for running GWAS is")
-          print(head(X))
+          #if(i == 1) print("the head of X for running GWAS is")
+          #if(i == 1) print(head(X))
         }       
         
       } 
@@ -519,11 +583,11 @@ for (i in loopStart:mloop){
       if(SNP.P3D==FALSE & !is.null(K))
       {
         if(!is.null(Z)) eig.R <- emma.eigen.R.w.Z(Z, K, X) #This will be used to get REstricted ML (REML)
-        if(is.null(Z)) eig.R <- emma.eigen.R.wo.Z(   K, X) #This will be used to get REstricted ML (REML)
+        if(is.null(Z)) eig.R <- emma.eigen.R.wo.Z( K, X) #This will be used to get REstricted ML (REML)
         if(!is.null(Z)) REMLE <- GAPIT.emma.REMLE(ys[j,], X, K, Z, ngrids, llim, ulim, esp, eig.R)
         if(is.null(Z)) REMLE <- GAPIT.emma.REMLE(ys[j,], X, K, Z = NULL, ngrids, llim, ulim, esp, eig.R)
-        if(!is.null(Z) & !is.null(K))  U <- eig.L$vectors * matrix(c(sqrt(1/(eig.L$values + REMLE$delta)),rep(sqrt(1/REMLE$delta),nr - tv)),nr,((nr-tv)+length(eig.L$values)),byrow=TRUE)
-        if(is.null(Z) & !is.null(K))  U <- eig.L$vectors * matrix(  sqrt(1/(eig.L$values + REMLE$delta)),nr,length(eig.L$values),byrow=TRUE)
+        if(!is.null(Z) & !is.null(K)) U <- eig.L$vectors * matrix(c(sqrt(1/(eig.L$values + REMLE$delta)),rep(sqrt(1/REMLE$delta),nr - tv)),nr,((nr-tv)+length(eig.L$values)),byrow=TRUE)
+        if(is.null(Z) & !is.null(K)) U <- eig.L$vectors * matrix( sqrt(1/(eig.L$values + REMLE$delta)),nr,length(eig.L$values),byrow=TRUE)
 
         vgs <- REMLE$vg
         ves <- REMLE$ve
@@ -542,12 +606,21 @@ for (i in loopStart:mloop){
              Xt <- X0t
             }
             if(i > 0 | file>file.from |frag>1){
-              #if(i ==1 & file==file.from&frag==1)  Xt <- matrix(NA,nr, q1)
-
+              #if(i ==1 & file==file.from&frag==1) Xt <- matrix(NA,nr, q1)
+             
+             if(Create.indicator){
+                xst <- crossprod(U, X[,(q0+1):q1])
+                Xt[1:nr,1:q0] <- X0t
+                Xt[1:nr,(q0+1):q1] <- xst
+               
+             }
+             
               #print(paste("i:",i,"q0:",q0,"q1:",q1,"nt:",nr,"XT row",nrow(Xt),"XT col",ncol(Xt),sep=" "))
-              xst <- crossprod(U, X[,ncol(X)])
-              Xt[1:nr,1:q0] <- X0t
-              Xt[1:nr,q1] <- xst
+             if(!Create.indicator){
+                xst <- crossprod(U, X[,ncol(X)])
+                Xt[1:nr,1:q0] <- X0t
+                Xt[1:nr,q1] <- xst
+             }
             }
         }else{
         yt=yv
@@ -567,9 +640,9 @@ for (i in loopStart:mloop){
          XstX0 <- t(X0Xst)
          xstxst <- crossprod(xst, xst)
          # if(i == 1){
-         #  Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Calculate_X0Xst_XstX0_xstxst")
-         #  Memory=GAPIT.Memory(Memory=Memory,Infor="Calculate_X0Xst_XstX0_xstxst")
-         #   }
+         # Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Calculate_X0Xst_XstX0_xstxst")
+         # Memory=GAPIT.Memory(Memory=Memory,Infor="Calculate_X0Xst_XstX0_xstxst")
+         # }
          #XX <- rbind(cbind(X0X0, X0Xst), cbind(XstX0, xstxst))
 
          #XX[1:q0,1:q0] <- X0X0
@@ -594,10 +667,10 @@ for (i in loopStart:mloop){
         if(i > 0 | file>file.from |frag>1){
          xsY <- crossprod(xst,yt)
          XY <- c(X0Y,xsY)
-#         if(i == 1){
-#         Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Calculate_xsY_X0Y")
-#         Memory=GAPIT.Memory(Memory=Memory,Infor="Calculate_xsY_X0Y")
-#         }
+# if(i == 1){
+# Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Calculate_xsY_X0Y")
+# Memory=GAPIT.Memory(Memory=Memory,Infor="Calculate_xsY_X0Y")
+# }
         }
         #XY = crossprod(Xt,yt)
       }
@@ -628,21 +701,40 @@ for (i in loopStart:mloop){
       if(i > 0 | file>file.from |frag>1){
 
       #if(i ==1 &file==file.from &frag==1) iXX=matrix(NA,q1,q1)
+        if(Create.indicator){
+          B22 <- xstxst - XstX0%*%iX0X0%*%X0Xst
+          invB22 <- solve(B22)
+          B21 <- tcrossprod(XstX0, iX0X0)
+          NeginvB22B21 <- crossprod(-invB22,B21)
+          B11 <- iX0X0 + as.numeric(invB22)*crossprod(B21,B21)
 
-       B22 <- xstxst - XstX0%*%iX0X0%*%X0Xst
-        invB22 <- 1/B22
-        #B12 <- crossprod(iX0X0,X0Xst)
-        B21 <- tcrossprod(XstX0, iX0X0)
-        NeginvB22B21 <- crossprod(-invB22,B21)
-        #B11 <- iX0X0 + B12%*%invB22%*%B21
-        B11 <- iX0X0 + as.numeric(invB22)*crossprod(B21,B21)
-        #iXX <- rbind(cbind(B11,t(NeginvB22B21)), cbind(NeginvB22B21,invB22))
 
-        iXX[1:q0,1:q0]=B11
-        iXX[q1,q1]=1/B22
-        iXX[q1,1:q0]=NeginvB22B21
-        iXX[1:q0,q1]=NeginvB22B21
 
+          iXX[1:q0,1:q0]=B11
+          iXX[(q0+1):q1,(q0+1):q1]=solve(B22)  
+          iXX[(q0+1):q1,1:q0]=NeginvB22B21
+          iXX[1:q0,(q0+1):q1]=t(NeginvB22B21)
+
+        }
+
+      
+        if(!Create.indicator){
+          B22 <- xstxst - XstX0%*%iX0X0%*%X0Xst
+          invB22 <- 1/B22
+          #B12 <- crossprod(iX0X0,X0Xst)
+          B21 <- tcrossprod(XstX0, iX0X0)
+          NeginvB22B21 <- crossprod(-invB22,B21)
+          #B11 <- iX0X0 + B12%*%invB22%*%B21
+          B11 <- iX0X0 + as.numeric(invB22)*crossprod(B21,B21)
+          #iXX <- rbind(cbind(B11,t(NeginvB22B21)), cbind(NeginvB22B21,invB22))
+
+          iXX[1:q0,1:q0]=B11
+          iXX[q1,q1]=1/B22
+          iXX[q1,1:q0]=NeginvB22B21
+          iXX[1:q0,q1]=NeginvB22B21
+          
+
+        }
         #if(i == 1){
         # Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Calculate_iXX")
         # Memory=GAPIT.Memory(Memory=Memory,Infor="Calculate_iXX")
@@ -657,8 +749,13 @@ for (i in loopStart:mloop){
 
       #iXX <- try(solve(XX))
       #if(inherits(iXX, "try-error")) iXX <- ginv(crossprod(Xt, Xt))
+      #print("The dimension if iXX is")
+      #print(dim(iXX))
+      #print("The length of XY is")
+      #print(length(XY))
+      
       beta <- crossprod(iXX,XY) #Note: we can use crossprod here becase iXX is symmetric
-
+      #print("beta was estimated")
 
 #-------------------------------------------------------------------------------------------------------------------->
 
@@ -666,7 +763,7 @@ for (i in loopStart:mloop){
       if(i ==0 &file==file.from &frag==1 & !is.null(K))
       {
         Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="ReducedModel")
-	  Memory=GAPIT.Memory(Memory=Memory,Infor="ReducdModel")
+Memory=GAPIT.Memory(Memory=Memory,Infor="ReducdModel")
 
 
         XtimesBetaHat <- X%*%beta
@@ -675,7 +772,7 @@ for (i in loopStart:mloop){
         vgK <- vgs*K
         Dt <- crossprod(U, YminusXtimesBetaHat)
 
-        if(!is.null(Z))  Zt <- crossprod(U, Z)
+        if(!is.null(Z)) Zt <- crossprod(U, Z)
         if(is.null(Z)) Zt <- t(U)
 
         if(X0X0[1,1] == "NaN")
@@ -721,6 +818,8 @@ for (i in loopStart:mloop){
         term.2=C21%*%crossprod(Xt,Zt)%*%K
         C22=(term.1-term.2 )
         PEV=as.matrix(diag(C22))
+ #print(paste("The value of is.na(CVI) is", is.na(CVI),  sep = ""))
+if(!is.na(CVI)){
 		XCV=as.matrix(cbind(1,data.frame(CVI[,-1])))
 	
 		#CV.Inheritance specified
@@ -732,12 +831,15 @@ for (i in loopStart:mloop){
 		#Interception only
 		if(length(beta)==1)XCV=X
 		
-       	BLUE=XCV%*%beta.Inheritance
-		
-    	  Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="PEV")
+        BLUE=try(XCV%*%beta.Inheritance)
+        if(inherits(BLUE, "try-error")) BLUE = NA
+     #print("GAPIT just after BLUE")
+     Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="PEV")
         Memory=GAPIT.Memory(Memory=Memory,Infor="PEV")
 
       }#end of if(i ==0&file==file.from   & !is.null(K))
+ if(is.na(CVI)) BLUE = NA
+}#end if(!is.na(CVI))
 #-------------------------------------------------------------------------------------------------------------------->
 
 #--------------------------------------------------------------------------------------------------------------------<
@@ -746,45 +848,45 @@ for (i in loopStart:mloop){
         YY=crossprod(yt, yt)
         ves=(YY-crossprod(beta,XY))/(n-q0)
         r=yt-X%*%iXX%*%XY
-        REMLs=-.5*(n-q0)*log(det(ves))                  -.5*n                   -.5*(n-q0)*log(2*pi)
-#       REMLs=-.5*n*log(det(ves)) -.5*log(det(iXX)/ves) -.5*crossprod(r,r)/ves  -.5*(n-q0)*log(2*pi)
+        REMLs=-.5*(n-q0)*log(det(ves)) -.5*n -.5*(n-q0)*log(2*pi)
+# REMLs=-.5*n*log(det(ves)) -.5*log(det(iXX)/ves) -.5*crossprod(r,r)/ves -.5*(n-q0)*log(2*pi)
         vgs = 0
         BLUP = 0
         BLUP_Plus_Mean = NaN
         PEV = ves
         #print(paste("X row:",nrow(X)," col:",ncol(X)," beta:",length(beta),sep=""))
-		XCV=as.matrix(cbind(1,data.frame(CVI[,-1])))
-	
-		#CV.Inheritance specified
-		beta.Inheritance=beta
-		if(!is.null(CV.Inheritance)){
-			XCV=XCV[,1:(1+CV.Inheritance)]
-			beta.Inheritance=beta[1:(1+CV.Inheritance)]
-		}
-		#Interception only
-		if(length(beta)==1)XCV=X
+XCV=as.matrix(cbind(1,data.frame(CVI[,-1])))
 
-		
-       	BLUE=XCV%*%beta.Inheritance
+#CV.Inheritance specified
+beta.Inheritance=beta
+if(!is.null(CV.Inheritance)){
+XCV=XCV[,1:(1+CV.Inheritance)]
+beta.Inheritance=beta[1:(1+CV.Inheritance)]
+}
+#Interception only
+if(length(beta)==1)XCV=X
+
+
+        BLUE=XCV%*%beta.Inheritance
 
       }
 
 
-#Clean up the BLUP starf to save memory
+#Clean up the BLUP stuff to save memory
 if(i ==0 &file==file.from &frag==1 & !is.null(K))
 {
-    	  Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="K normal")
+     Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="K normal")
         Memory=GAPIT.Memory(Memory=Memory,Infor="K normal")
-K=1
+if(SNP.P3D == TRUE) K=1  #NOTE: When SNP.P3D == FALSE, this line will mess up the spectral decomposition of the kinship matrix at each SNP.
 rm(Dt)
-rm(Zt)
+rm(Zt)            
 rm(Kinv)
 rm(C11)
 rm(C21)
 rm(C22)
 
 gc()
-    	  Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="K set to 1")
+     Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="K set to 1")
         Memory=GAPIT.Memory(Memory=Memory,Infor="K set to 1")
 }
 
@@ -818,13 +920,15 @@ gc()
         ps[i, ] <- 2 * pt(abs(stats[i, ]), dfs[i, ],lower.tail = FALSE)
        } 
        if(Create.indicator){
-        F.num.first.two <- crossprod(beta[q1:length(beta)], solve(iXX[q1:length(beta),q1:length(beta)]))
-        if(!is.null(K)) stats[i, j] <- (F.num.first.two %*% beta[q1:length(beta)])/(length(q1:length(beta))*vgs) 
-        if(is.null(K)) stats[i, j] <- (F.num.first.two %*% beta[q1:length(beta)])/(length(q1:length(beta))*ves) 
-        effect.est[i, ] <- beta[q1:length(beta)]
-        ps[i, ] <- pf(stats[i, j], df1=length(q1:length(beta)), df2=(nr-ncol(X)), lower.tail = FALSE)
+       
+        F.num.first.two <- crossprod(beta[(q0+1):q1], solve(iXX[(q0+1):q1,(q0+1):q1]))
+        if(!is.null(K)) stats[i, j] <- (F.num.first.two %*% beta[(q0+1):q1])/(length((q0+1):q1)*vgs)
+        if(is.null(K)) stats[i, j] <- (F.num.first.two %*% beta[(q0+1):q1])/(length((q0+1):q1)*ves)
+        effect.est <- rbind(effect.est, cbind(rep(i,length((q0+1):q1)), indicator$unique.SNPs, beta[(q0+1):q1])) #Replace with rbind
+        ps[i, ] <- pf(stats[i, j], df1=length((q0+1):q1), df2=(nr-ncol(X)), lower.tail = FALSE) #Alex, are these denominator degrees of freedom correct?
         dfs[i,] <- nr-nrow(X)
-       } 
+        
+       }
               #Calculate the maximum full likelihood function value and the r square
 
       X.beta <- X%*%beta
@@ -863,11 +967,11 @@ if(!fullGD)
   write.table(rsquare_base, paste("GAPIT.TMP.rsquare.base.",name.of.trait,file,".",frag,".txt",sep=""), quote = FALSE, sep = "\t", row.names = FALSE,col.names = FALSE)
   write.table(rsquare, paste("GAPIT.TMP.rsquare.",name.of.trait,file,".",frag,".txt",sep=""), quote = FALSE, sep = "\t", row.names = FALSE,col.names = FALSE)
   write.table(effect.est, paste("GAPIT.TMP.effect.est.",name.of.trait,file,".",frag,".txt",sep=""), quote = FALSE, sep = "\t", row.names = FALSE,col.names = FALSE)
+ 
   #rm(dfs,stats,ps,nobs,maf,GI)   #This cause problem on return
   #gc()
 }
-
-
+ 
     frag=frag+1   #Progress to next fragment
 
 } #end of if(!is.null(X))

@@ -12,7 +12,7 @@ function(G=NULL,GD=NULL,GM=NULL,KI=NULL,
   bin.size = 1000,inclosure.size = 100,
   sangwich.top=NULL,sangwich.bottom=NULL,
   file.output=TRUE,
-  Create.indicator = FALSE){
+  Create.indicator = FALSE, Major.allele.zero = FALSE){
 #Object: To unify genotype and calculate kinship and PC if required:
 #       1.For G data, convert it to GD and GI
 #       2.For GD and GM data, nothing change 
@@ -25,6 +25,8 @@ function(G=NULL,GD=NULL,GM=NULL,KI=NULL,
 ##############################################################################################
 
 print("Genotyping: numericalization, sampling kinship, PCs and much more...")
+
+
 
 Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Genotype start")
 Memory=GAPIT.Memory(Memory=Memory,Infor="Genotype start")
@@ -159,7 +161,9 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="Before HapMap")
 
 #Convert HapMap to numerical
 print(paste("Converting genotype...",sep=""))
-hm=GAPIT.HapMap(G,SNP.effect=SNP.effect,SNP.impute=SNP.impute, Create.indicator = Create.indicator)
+
+
+hm=GAPIT.HapMap(G,SNP.effect=SNP.effect,SNP.impute=SNP.impute, Create.indicator = Create.indicator, Major.allele.zero = Major.allele.zero)
 
 Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="after HapMap")
 Memory=GAPIT.Memory(Memory=Memory,Infor="after HapMap")
@@ -233,7 +237,7 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="Before Fragment")
                             seed=seed,SNP.fraction=SNP.fraction,SNP.effect=SNP.effect,SNP.impute=SNP.impute,genoFormat=genoFormat,
                             file.GD=file.GD,file.Ext.GD=file.Ext.GD,file.GM=file.GM,file.Ext.GM=file.Ext.GM,
                             file.fragment=file.fragment,file=file,frag=frag,
-                            LD.chromosome=LD.chromosome,LD.location=LD.location,LD.range=LD.range)
+                            LD.chromosome=LD.chromosome,LD.location=LD.location,LD.range=LD.range, Create.indicator = Create.indicator, Major.allele.zero = Major.allele.zero)
    #print(paste("numSNP after while is ",numSNP))
      #print(paste("OK with file: ",file,"Fragment: ",frag))
 
@@ -405,7 +409,14 @@ if(is.null(KI) & (!is.null(GD) |!is.null(GK)) & kinship.algorithm!="SUPER")
  print(paste("Number of individuals and SNPs are ",nrow(thisGD)," and ",ncol(thisGD)))
  theKin=NULL
 
-  if(kinship.algorithm=="EMMA")theKin= emma.kinship(snps=t(as.matrix(.5*thisGD)), method="additive", use="all")
+  if(kinship.algorithm=="EMMA"){
+    half.thisGD = as.matrix(.5*thisGD)
+    if(length(which(is.na(half.thisGD))) > 0){
+      print("Substituting missing values with heterozygote for kinship matrrix calculation....")
+      half.thisGD[which(is.na(half.thisGD))] = 1
+    }
+    theKin= emma.kinship(snps=t(as.matrix(.5*thisGD)), method="additive", use="all")
+  }  
   if(kinship.algorithm=="Loiselle")theKin= GAPIT.kinship.loiselle(snps=t(as.matrix(.5*thisGD)), method="additive", use="all")
   if(kinship.algorithm=="VanRaden")theKin= GAPIT.kinship.VanRaden(snps=as.matrix(thisGD))
   if(kinship.algorithm=="Separation")theKin= GAPIT.kinship.separation(PCs=thePCA$PCs,EV=thePCA$EV,nPCs=PCA.total)

@@ -1,12 +1,12 @@
 `GAPIT.HapMap` <-
-function(G,SNP.effect="Add",SNP.impute="Middle",heading=TRUE, Create.indicator = FALSE){
+function(G,SNP.effect="Add",SNP.impute="Middle",heading=TRUE, Create.indicator = FALSE, Major.allele.zero = FALSE){
 #Object: To convert character SNP genotpe to numerical
 #Output: Coresponding numerical value
 #Authors: Feng Tian and Zhiwu Zhang
 # Last update: May 30, 2011 
 ##############################################################################################
 
-print(paste("Converting hampmap format to numerical under model of ", SNP.impute,sep=""))
+print(paste("Converting HapMap format to numerical under model of ", SNP.impute,sep=""))
 #gc()
 #GAPIT.Memory.Object(name.of.trait="HapMap.Start")
 
@@ -30,11 +30,12 @@ bit=nchar(as.character(G[2,12])) #to determine number of bits of genotype
 #print(paste("Number of bits for genotype: ", bit))
 
 print("Perform numericalization")
+  
 if(heading){
-  if(!Create.indicator) GD= apply(G[-1,-(1:11)],1,function(one) GAPIT.Numericalization(one,bit=bit,effect=SNP.effect,impute=SNP.impute))
+  if(!Create.indicator) GD= apply(G[-1,-(1:11)],1,function(one) GAPIT.Numericalization(one,bit=bit,effect=SNP.effect,impute=SNP.impute, Major.allele.zero=Major.allele.zero))
   if(Create.indicator) GD= t(G[-1,-(1:11)])
 }else{
-  if(!Create.indicator) GD= apply(G[  ,-(1:11)],1,function(one) GAPIT.Numericalization(one,bit=bit,effect=SNP.effect,impute=SNP.impute))
+  if(!Create.indicator) GD= apply(G[  ,-(1:11)],1,function(one) GAPIT.Numericalization(one,bit=bit,effect=SNP.effect,impute=SNP.impute, Major.allele.zero=Major.allele.zero))
   if(Create.indicator) GD= t(G[ ,-(1:11)])
 }
 
@@ -47,10 +48,8 @@ if(is.null(GD)){
 #print("The dimension of GD is:")
 #print(dim(GD))
 
-#print("The head of the first seven columns of GD is")
-#print(head(GD)[,1:7])
 
-if(!Create.indicator) print(paste("Succesfuly finished converting hampmap which has bits of ", bit,sep=""))
+if(!Create.indicator) print(paste("Succesfuly finished converting HapMap which has bits of ", bit,sep=""))
 return(list(GT=GT,GD=GD,GI=GI))
 }#end of GAPIT.HapMap function
 

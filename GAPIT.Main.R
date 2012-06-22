@@ -11,13 +11,15 @@ function(Y,G=NULL,GD=NULL,GM=NULL,KI=NULL,Z=NULL,CV=NULL,CV.Inheritance=NULL,SNP
                 genoFormat=NULL,hasGenotype=NULL,byFile=NULL,fullGD=NULL,PC=NULL,GI=NULL, Timmer = NULL, Memory = NULL,
                 sangwich.top=NULL,sangwich.bottom=NULL,QC=TRUE,GTindex=NULL,LD=0.05,
                 file.output=TRUE,cutOff=0.01, Model.selection = FALSE, Create.indicator = FALSE,
-				QTN=NULL, QTN.round=1,QTN.limit=0, QTN.update=TRUE, QTN.method="Penalty"){
+				QTN=NULL, QTN.round=1,QTN.limit=0, QTN.update=TRUE, QTN.method="Penalty", Major.allele.zero = FALSE){
 #Object: To perform GWAS and GPS (Genomic Prediction or Selection)
 #Output: GWAS table (text file), QQ plot (PDF), Manhattan plot (PDF), genomic prediction (text file), and
 #        genetic and residual variance components
 #Authors: Zhiwu Zhang
 # Last update: may 12, 2011
 ##############################################################################################
+
+
 
 #Return imediatly in one of these situtiona
 shortcut=FALSE
@@ -263,7 +265,7 @@ if(!byPass & (!is.null(GK) | !is.null(GP)))
                   LD.chromosome=LD.chromosome,LD.location=LD.location,LD.range=LD.range,
                   GP=GP,GK=GK,bin.size=bin,inclosure.size=inc,SNP.CV=SNP.CV,
                   Timmer = Timmer, Memory = Memory,GTindex=GTindex,sangwich.top=NULL,sangwich.bottom=sangwich.bottom,
-                  file.output=file.output)
+                  file.output=file.output, Create.indicator = Create.indicator, Major.allele.zero = Major.allele.zero)
    
   Timmer=myGenotype$Timmer
   Memory=myGenotype$Memory
@@ -342,16 +344,18 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="Prio PreP3D")
 #Evaluating maximum likelohood
 #print("Calling EMMAxP3D...")
 
-print("It made it to here")
-print("The dimension of xs is:")
-print("The value of SNP.impute is")
-print(SNP.impute)
+#print("It made it to here")
+#print("The dimension of xs is:")
+#print("The value of SNP.impute is")
+#print(SNP.impute)
+
+#write.table(zc$Z, "Z.csv", quote = FALSE, sep = ",", row.names = FALSE,col.names = TRUE)
 
 print(dim(as.matrix(as.data.frame(GD[GTindex,colInclude]))))
 p3d <- GAPIT.EMMAxP3D(ys=ys,xs=as.matrix(as.data.frame(GD[GTindex,colInclude])),K = as.matrix(bk$KW) ,Z=matrix(as.numeric(as.matrix(zc$Z[,-1])),nrow=zrow,ncol=zcol),X0=X0,CVI=CVI,CV.Inheritance=CV.Inheritance,GI=GI,SNP.P3D=SNP.P3D,Timmer=Timmer,Memory=Memory,fullGD=fullGD,
         SNP.permutation=SNP.permutation, GP=GP,
 			 file.path=file.path,file.from=file.from,file.to=file.to,file.total=file.total, file.fragment = file.fragment, byFile=byFile, file.G=file.G,file.Ext.G=file.Ext.G,file.GD=file.GD, file.GM=file.GM, file.Ext.GD=file.Ext.GD,file.Ext.GM=file.Ext.GM,
-       GTindex=GTindex,genoFormat=genoFormat,optOnly=optOnly,SNP.effect=SNP.effect,SNP.impute=SNP.impute,name.of.trait=name.of.trait, Create.indicator = Create.indicator)
+       GTindex=GTindex,genoFormat=genoFormat,optOnly=optOnly,SNP.effect=SNP.effect,SNP.impute=SNP.impute,name.of.trait=name.of.trait, Create.indicator = Create.indicator, Major.allele.zero = Major.allele.zero)
 
 Timmer=p3d$Timmer
 Memory=p3d$Memory
@@ -396,7 +400,6 @@ if(count==1)print("-------The burger is SNP-----------------------------------")
 #@@@This section is not useful
 if(!is.null(GP))
 {
-
   #print("Being specific...")
 
   myGenotype<-GAPIT.Genotype(G=NULL,GD=NULL,GM=GI,KI=NULL,kinship.algorithm="SUPER",PCA.total=0,SNP.fraction=SNP.fraction,SNP.test=SNP.test,
@@ -405,7 +408,7 @@ if(!is.null(GP))
                     SNP.MAF=SNP.MAF,FDR.Rate = FDR.Rate,SNP.FDR=SNP.FDR,SNP.effect=SNP.effect,SNP.impute=SNP.impute,
                     LD.chromosome=LD.chromosome,LD.location=LD.location,LD.range=LD.range,
                     GP=GP,GK=NULL,bin.size=bin,inclosure.size=inc,SNP.CV=SNP.CV,GTindex=GTindex,sangwich.top=NULL,sangwich.bottom=sangwich.bottom,
-                    Timmer = Timmer, Memory = Memory,file.output=file.output)
+                    Timmer = Timmer, Memory = Memory,file.output=file.output, Create.indicator = Create.indicator, Major.allele.zero = Major.allele.zero)
     
   Timmer=myGenotype$Timmer
   Memory=myGenotype$Memory
@@ -524,7 +527,7 @@ if(Model.selection == TRUE){
     p3d <- GAPIT.EMMAxP3D(ys=ys,xs=as.matrix(as.data.frame(GD[,1])),K = as.matrix(bk$KW) ,Z=Z1,X0=X0.test,CVI=CVI,CV.Inheritance=CV.Inheritance,GI=GI,SNP.P3D=SNP.P3D,Timmer=Timmer,Memory=Memory,fullGD=fullGD,
             SNP.permutation=SNP.permutation, GP=GP,
 			      file.path=file.path,file.from=file.from,file.to=file.to,file.total=file.total, file.fragment = file.fragment, byFile=byFile, file.G=file.G,file.Ext.G=file.Ext.G,file.GD=file.GD, file.GM=file.GM, file.Ext.GD=file.Ext.GD,file.Ext.GM=file.Ext.GM,
-            GTindex=GTindex,genoFormat=genoFormat,optOnly=TRUE,SNP.effect=SNP.effect,SNP.impute=SNP.impute,name.of.trait=name.of.trait, Create.indicator = Create.indicator)
+            GTindex=GTindex,genoFormat=genoFormat,optOnly=TRUE,SNP.effect=SNP.effect,SNP.impute=SNP.impute,name.of.trait=name.of.trait, Create.indicator = Create.indicator, Major.allele.zero = Major.allele.zero)
 
     
     
@@ -661,7 +664,7 @@ print(kt)
   p3d <- GAPIT.EMMAxP3D(ys=ys,xs=as.matrix(as.data.frame(GD[GTindex,colInclude]))   ,K = as.matrix(bk$KW) ,Z=Z1,X0=as.matrix(X0),CVI=CVI, CV.Inheritance=CV.Inheritance,GI=GI,SNP.P3D=SNP.P3D,Timmer=Timmer,Memory=Memory,fullGD=fullGD,
           SNP.permutation=SNP.permutation, GP=GP,
     			 file.path=file.path,file.from=file.from,file.to=file.to,file.total=file.total, file.fragment = file.fragment, byFile=byFile, file.G=file.G,file.Ext.G=file.Ext.G,file.GD=file.GD, file.GM=file.GM, file.Ext.GD=file.Ext.GD,file.Ext.GM=file.Ext.GM,
-           GTindex=GTindex,genoFormat=genoFormat,optOnly=optOnly,SNP.effect=SNP.effect,SNP.impute=SNP.impute,name.of.trait=name.of.trait, Create.indicator = Create.indicator)  
+           GTindex=GTindex,genoFormat=genoFormat,optOnly=optOnly,SNP.effect=SNP.effect,SNP.impute=SNP.impute,name.of.trait=name.of.trait, Create.indicator = Create.indicator, Major.allele.zero = Major.allele.zero)  
     
   Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="GWAS")
   Memory=GAPIT.Memory(Memory=Memory,Infor="GWAS")  
@@ -872,13 +875,14 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="Extract bread results")
 }
 
 #Merge BLUP and BLUE
-if(!byPass){
-
+if((!byPass)&(!Model.selection)){
+ #print("GAPIT before BLUP and BLUE")
  BLUE=data.frame(cbind(data.frame(CV.taxa),data.frame(p3d$BLUE)))
  colnames(BLUE)=c("Taxa","BLUE")
  BB= merge(gs$BLUP, BLUE, by.x = "Taxa", by.y = "Taxa")
  Prediction=BB[,5]+BB[,7]
  Pred=data.frame(cbind(BB,data.frame(Prediction)))
+  #print("GAPIT after BLUP and BLUE")
 }
 
 
@@ -911,8 +915,33 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="Extract GWAS start")
 	colnames(PWI.Filtered)=c("SNP","Chromosome","Position ","P.value", "maf", "nobs", "Rsquare.of.Model.without.SNP","Rsquare.of.Model.with.SNP")
 
 if(!byPass){  
-  GWAS.2 <- cbind(GI, effect.est)
-  colnames(GWAS.2) <- c("SNP","Chromosome","Position ", "Allelic Effect Estimate")
+   if(Create.indicator){
+    #Add a counter column for GI
+    GI.counter <- cbind(GI, seq(1:nrow(GI))) 
+    
+    #Turn GI and effect.est into data frames
+    GI.counter.data.frame <- data.frame(GI.counter)
+    colnames(GI.counter.data.frame) <- c("X1", "X2", "X3", "X4")
+    
+    effect.est.data.frame <- data.frame(effect.est)
+    colnames(effect.est.data.frame) <- c("X1", "X2", "X3")
+            
+    #Do a merge statement
+    GWAS.2 <- merge(GI.counter.data.frame, effect.est.data.frame, by.x = "X4", by.y = "X1")
+    
+    #Remove the counter column
+    GWAS.2 <- GWAS.2[,-1]
+    
+    #Add column names
+    colnames(GWAS.2) <- c("SNP","Chromosome","Position ", "Genotype", "Allelic Effect Estimate")
+    
+    
+   }
+   
+   if(!Create.indicator){ 
+    GWAS.2 <- cbind(GI, effect.est)
+    colnames(GWAS.2) <- c("SNP","Chromosome","Position ", "Allelic Effect Estimate")
+   } 
 }
   	     
 Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="MAF filtered")
@@ -990,7 +1019,7 @@ print(paste(name.of.trait, "has been analyzed successfully!") )
 print(paste("The results are saved in the directory of ", getwd()) )
 print("==========================================================================================")
 
-if(byPass) Pred <- NA
+if(byPass | Model.selection) Pred <- NA
 
 return (list(Timmer=Timmer,Compression=Compression,kinship.optimum=theK.return, kinship=KI,PC=PC,GWAS=GWAS, GPS=GPS,Pred=Pred,REMLs=Compression[count,4],Timmer=Timmer,Memory=Memory))
 

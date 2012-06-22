@@ -1,5 +1,5 @@
 `GAPIT.Numericalization` <-
-function(x,bit=2,effect="Add",impute="None", Create.indicator = FALSE){
+function(x,bit=2,effect="Add",impute="None", Create.indicator = FALSE, Major.allele.zero = FALSE){
 #Object: To convert character SNP genotpe to numerical
 #Output: Coresponding numerical value
 #Authors: Feng Tian and Zhiwu Zhang
@@ -28,11 +28,42 @@ lev=setdiff(lev,"N")
 len=length(lev)
 #print(lev)
 
+
+
 #Genotype counts
 count=1:len
 for(i in 1:len){
 	count[i]=length(x[(x==lev[i])])
 }
+
+
+
+if(Major.allele.zero){
+  if(len>1 & len<=3){
+    #One bit: Make sure that the SNP with the major allele is on the top, and the SNP with the minor allele is on the second position
+    if(bit==1){ 
+      count.temp = cbind(count, seq(1:len))
+      if(len==3) count.temp = count.temp[-3,]
+      count.temp <- count.temp[order(count.temp[,1], decreasing = TRUE),]
+      if(len==3)order =  c(count.temp[,2],3)else order = count.temp[,2]
+    }
+
+    #Two bit: Make sure that the SNP with the major allele is on the top, and the SNP with the minor allele is on the third position
+    if(bit==2){ 
+      count.temp = cbind(count, seq(1:len))
+      if(len==3) count.temp = count.temp[-2,]
+      count.temp <- count.temp[order(count.temp[,1], decreasing = TRUE),]
+      if(len==3) order =  c(count.temp[1,2],2,count.temp[2,2])else order = count.temp[,2]
+    }
+
+    count = count[order]
+    lev = lev[order]
+
+  }   #End  if(len<=1 | len> 3)
+} #End  if(Major.allele.zero)
+
+
+
 #make two  bit order genotype as AA,AT and TT, one bit as A(AA),T(TT) and X(AT)
 if(bit==1 & len==3){
 	temp=count[2]
@@ -40,6 +71,7 @@ if(bit==1 & len==3){
 	count[3]=temp
 }
 position=order(count)
+
 
 #1status other than 2 or 3
 if(len<=1 | len> 3)x=0
