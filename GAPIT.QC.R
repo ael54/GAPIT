@@ -29,12 +29,21 @@ taxa.kept=unique(GT[,1])
 
 # Remove duplicates for KI 
 print("Remove duplicates for KI...")
-#@@@ improve speed: remove t() and use cbind
+# improve speed: remove t() and use cbind
 if(!is.null(KI))
 {
   taxa.all=KI[,1]
   taxa.uniqe=unique(taxa.all)
   position=match(taxa.uniqe, taxa.all,nomatch = 0)
+  position.addition=cbind(1,t(1+position))
+  KI=KI[position,position.addition]
+}
+
+#Sort KI
+if(!is.null(KI))
+{
+  taxa.all=KI[,1]
+  position=order(taxa.all)
   position.addition=cbind(1,t(1+position))
   KI=KI[position,position.addition]
 }

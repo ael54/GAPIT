@@ -9,7 +9,7 @@ function(){
 
 #Designed by Zhiwu Zhang
 #Writen by Alex Lipka, Feng Tian and Zhiwu Zhang
-GAPIT.Version="2.19, May 14, 2012 (Splite the big file into individual function files and other minor chages)"
+GAPIT.Version="2.20, Nov 8, 2012 (Sort Kinship for non-compression)"
 return(GAPIT.Version)
 }
 

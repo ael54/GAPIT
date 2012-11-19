@@ -9,7 +9,7 @@ function(){
 
 #Designed by Zhiwu Zhang
 #Writen by Alex Lipka, Feng Tian and Zhiwu Zhang
-GAPIT.Version="2.19, May 14, 2012 (Splite the big file into individual function files and other minor chages)"
+GAPIT.Version="2.20, Nov 8, 2012 (Sort Kinship for non-compression)"
 return(GAPIT.Version)
 }
 
@@ -655,43 +655,26 @@ xs[xs=="NN"]="N"
 #Create the indicators
 
 #Sort the SNPs by genotype frequency
-if(length(which(xs == "N"))!=0){
 xs.temp <- xs[-which(xs == "N")]
-}else{
- xs.temp <- xs 
-}
 
 frequ<- NULL
 for(i in 1:length(unique(xs.temp))) frequ <- c(frequ, length(which(xs == unique(xs)[i])))
 
 unique.sorted <- cbind(unique(xs.temp), frequ)
 
-#print("unique.sorted is")
-#print(unique.sorted)
+print("unique.sorted is")
+print(unique.sorted)
 
-unique.sorted <- unique.sorted[order(as.numeric(unique.sorted[,2]), decreasing = TRUE),]
+unique.sorted <- unique.sorted[order(unique.sorted[,2]),]
 unique.sorted <- unique.sorted[,-2]
 
 
-unique.sorted.count <- unique.sorted
-
-#Ensure that the homozygotes are the first and last genotypes
-if(length(unique.sorted.count) >= 3){
- if(length(unique.sorted.count) == 3 ) unique.sorted <- cbind(unique.sorted, c(1,3,2))
- if(length(unique.sorted.count) > 3) unique.sorted <- cbind(unique.sorted, c(1,length(unique.sorted), seq(2:(length(unique.sorted)-1))))
- unique.sorted <- unique.sorted[order(as.numeric(unique.sorted[,2])),]
-
- unique.sorted <- unique.sorted[,-2]
-}
 #Impute based on the major and minor allele frequencies
-if(SNP.impute == "Major") xs[which(xs == "N")] = unique.sorted[1]
-if(SNP.impute == "Minor") xs[which(xs == "N")] = unique.sorted[length(unique.sorted)]
-if((SNP.impute == "Middle")&(length(unique.sorted.count) >= 3)) xs[which(xs == "N")] = unique.sorted[2]
-if((SNP.impute == "Middle")&(!length(unique.sorted.count) >= 3)) xs[which(xs == "N")] = unique.sorted[1]
-
+if(SNP.impute == "Major") xs[which(is.na(xs))] = unique.sorted[1]
+if(SNP.impute == "Minor") xs[which(is.na(xs))] = unique.sorted[length(unique.sorted)]
+if(SNP.impute == "Middle") xs[which(is.na(xs))] = unique.sorted[2]
 x.ind <- NULL
-unique.sorted.reduced <- unique.sorted[-length(unique.sorted)]
-for(i in unique.sorted.reduced){
+for(i in unique.sorted){
  x.col <- rep(NA, length(xs))
  x.col[which(xs==i)] <- 1
  x.col[which(xs!=i)] <- 0
@@ -699,9 +682,8 @@ for(i in unique.sorted.reduced){
 }
 
 
-#Return two outputs, "xv" and "unique.SNPs"
 
-return(list(x.ind = x.ind, unique.SNPs = unique.sorted.reduced))
+return(x.ind)
 
 #print("GAPIT.EMMAxP3D accomplished successfully!")
 }#end of GAPIT.EMMAxP3D function
@@ -2881,12 +2863,7 @@ function(snps, method="additive", use="all") {
   n1 <- sum(snps==1,na.rm=TRUE)
   #Number of SNP types that are missing
   nNA <- sum(is.na(snps))
- 
- #Impute missing SNPs with the heterozygote
- if(length(which(is.na(snps))) > 0){
-  print("Substituting missing values with heterozygote for kinship matrrix calculation....")
-  snps[which(is.na(snps))] = 1
- }
+  
 
  
   #Self explanatory
@@ -3022,11 +2999,6 @@ function(snps,hasInbred=TRUE) {
 
 print("Calculating kinship with VanRaden method...")
 
-#Impute missing SNPs with the heterozygote
-if(length(which(is.na(snps))) > 0){
- print("Substituting missing values with heterozygote for kinship matrrix calculation....")
- snps[which(is.na(snps))] = 1
-}
 #snps=hm$GD 
 nSNP=ncol(snps)
 nInd=nrow(snps)
@@ -3287,7 +3259,7 @@ print("-------------------Sandwich top bun-----------------------------------")
   GP=GAPIT.Bread(Y=Y,CV=CV,Z=Z,KI=KI,GK=GK,GD=cbind(as.data.frame(GT),as.data.frame(GD)),GM=GI,method=sangwich.top,GTindex=GTindex,LD=LD)$GWAS
   GK=NULL
   
-print("-------------------Sandwich top bun: done-----------------------------")  
+print("-------------------Sagnwich top bun: done-----------------------------")  
 
 } 
 
@@ -3304,7 +3276,7 @@ if(is.null(CV) | (!is.null(CV)& group.to<ncol(CV))) {
 #The minimum of group is number of columns in CV
   group.from=1
   group.to=1
-  warning("The upper bound of groups (group.to) is not sufficient. both boundries were set to 1 a and GLM is performed!")
+  warning("The upper bound of groups (group.to) is not sufficient. both boundries were set to a and GLM is performed!")
 }
 
 if(!is.null(CV)& group.from<1) {
@@ -3475,6 +3447,8 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="Prio PreP3D")
 #print("The dimension of xs is:")
 #print("The value of SNP.impute is")
 #print(SNP.impute)
+
+#write.table(zc$Z, "Z.csv", quote = FALSE, sep = ",", row.names = FALSE,col.names = TRUE)
 
 print(dim(as.matrix(as.data.frame(GD[GTindex,colInclude]))))
 p3d <- GAPIT.EMMAxP3D(ys=ys,xs=as.matrix(as.data.frame(GD[GTindex,colInclude])),K = as.matrix(bk$KW) ,Z=matrix(as.numeric(as.matrix(zc$Z[,-1])),nrow=zrow,ncol=zcol),X0=X0,CVI=CVI,CV.Inheritance=CV.Inheritance,GI=GI,SNP.P3D=SNP.P3D,Timmer=Timmer,Memory=Memory,fullGD=fullGD,
@@ -4471,12 +4445,7 @@ function(X,taxa, PC.number = min(ncol(X),nrow(X)),file.output=TRUE){
 ############################################################################################## 
 
 #Conduct the PCA 
-print("Calling prcomp...")
-if(length(which(is.na(X))) > 0){
- X <- as.matrix(X)
- print("Substituting missing values with heterozygote for PCA")
- X[which(is.na(X))] = 1
-}
+print("Callingg prcomp...")
 PCA.X <- prcomp(X)
 
 print("Creating PCA graphs...")
@@ -4510,8 +4479,6 @@ PCs <- cbind(taxa,as.data.frame(PCA.X$x))
 print("Exporting PCs...")
 #Write the PCs into a text file
 if(file.output) write.table(PCs, "GAPIT.PCA.csv", quote = FALSE, sep = ",", row.names = FALSE,col.names = TRUE)
-
-if(file.output) write.table(PCA.X$rotation[,1:PC.number], "GAPIT.PCA.loadings.csv", quote = FALSE, sep = ",", row.names = FALSE,col.names = TRUE)
 
 #Return the PCs
 return(list(PCs=PCs,EV=PCA.X$sdev^2,nPCs=NULL))
@@ -4634,12 +4601,21 @@ taxa.kept=unique(GT[,1])
 
 # Remove duplicates for KI 
 print("Remove duplicates for KI...")
-#@@@ improve speed: remove t() and use cbind
+# improve speed: remove t() and use cbind
 if(!is.null(KI))
 {
   taxa.all=KI[,1]
   taxa.uniqe=unique(taxa.all)
   position=match(taxa.uniqe, taxa.all,nomatch = 0)
+  position.addition=cbind(1,t(1+position))
+  KI=KI[position,position.addition]
+}
+
+#Sort KI
+if(!is.null(KI))
+{
+  taxa.all=KI[,1]
+  position=order(taxa.all)
   position.addition=cbind(1,t(1+position))
   KI=KI[position,position.addition]
 }
