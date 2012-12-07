@@ -31,9 +31,9 @@ GAU[position,3]=1
 #grp.1=as.matrix(unique(GAU[which(GAU[,3]==1),2]))
 #grp.2= as.matrix(setdiff(grp.12,grp.1))
 
-grp.12=as.matrix(as.vector(unique(GAU[,2])) )
-grp.1=as.matrix(as.vector(unique(GAU[which(GAU[,3]==1),2])) )
-grp.2= as.matrix(as.vector(setdiff(grp.12,grp.1)))
+grp.12=as.matrix(as.vector(unique(GAU[,2])) ) #unique group
+grp.1=as.matrix(as.vector(unique(GAU[which(GAU[,3]==1),2])) ) #unique phenotyped group
+grp.2= as.matrix(as.vector(setdiff(grp.12,grp.1))) #unique unphenotyped group
 
 numWithout=length(grp.2)
 
@@ -56,6 +56,7 @@ KWO=KG[grp.1,grp.2]
 #write.table(GAU, "GAU.txt", quote = FALSE, sep = "\t", row.names = TRUE,col.names = TRUE)
 
 #print("GAPIT.Block accomplished successfully!")
+
 return(list(GAU=GAU,KW=KW,KO=KO,KWO=KWO))
 }#The function GAPIT.Block ends here
 

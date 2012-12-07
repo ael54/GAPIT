@@ -358,11 +358,20 @@ if(!is.null(GP) & kinship.algorithm=="SUPER" & !is.null(bin.size) & !is.null(inc
   SNP.QTN=mySpecify$index
   
   if(!is.null(GD)){
-    GK=GD[GTindex,SNP.QTN]
+	#comment out to keep all taxa for GS, Zhiwu (Dec7, 2012)
+    #GK=GD[GTindex,SNP.QTN] 
+    #SNPVar=apply(as.matrix(GK),2,var)
+    #GK=GK[,SNPVar>0]
+    #GK=cbind(as.data.frame(GT[GTindex]),as.data.frame(GK)) #add taxa  
+
+	GK=GD[,SNP.QTN]
     SNPVar=apply(as.matrix(GK),2,var)
     GK=GK[,SNPVar>0]
-    GK=cbind(as.data.frame(GT[GTindex]),as.data.frame(GK)) #add taxa  
-    #print("QTN extracted")  
+    GK=cbind(as.data.frame(GT),as.data.frame(GK)) #add taxa  
+
+    	
+		
+		#print("QTN extracted")  
   }
 
   
@@ -399,11 +408,12 @@ if(is.null(KI) & (!is.null(GD) |!is.null(GK)) & kinship.algorithm!="SUPER")
   }else{
     thisGD=GD
     myGT=GT
-    
-    if(!is.null(GTindex)){
-      thisGD=thisGD[GTindex,]    
-      myGT=myGT[GTindex]    
-    }
+
+	#comment out to keep all taxa for GS, Zhiwu (Dec7, 2012)
+    #if(!is.null(GTindex)){
+    #  thisGD=thisGD[GTindex,]    
+    #  myGT=myGT[GTindex]    
+    #}
   }
   
  print(paste("Number of individuals and SNPs are ",nrow(thisGD)," and ",ncol(thisGD)))

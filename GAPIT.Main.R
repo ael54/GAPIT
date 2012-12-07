@@ -103,8 +103,8 @@ if(kinship.algorithm=="None" )
 	
 	theTDP=GAPIT.TDP(Y=Y,CV=CV,SNP=as.data.frame(cbind(GT[GTindex],as.matrix(as.data.frame(GD[GTindex,])))),
 			QTN=QTN, Round=QTN.round,QTN.limit=QTN.limit, QTN.update=QTN.update, Method=QTN.method)
-print(dim(GM))
-print(length(theTDP$p))
+#print(dim(GM))
+#print(length(theTDP$p))
 
 theGWAS=cbind(GM,theTDP$p,NA,NA,NA)	
 
@@ -184,8 +184,7 @@ if(!is.null(CV)& group.from<1) {
   group.from=1 #minimum of group is number of columns in CV
   warning("The lower bound of groups should be 1 at least. It was set to 1!")
 }
-print("debug KI")
-print(dim(KI))  
+ 
 nk=1000000000
 if(!is.null(KI)) nk=min(nk,nrow(KI))
 if(!is.null(GK)) nk=min(nk,nrow(GK))
@@ -257,7 +256,7 @@ for (inc in inclosure){
 if(!byPass & (!is.null(GK) | !is.null(GP)))
 {  
   print("Grilling KI...")
-  
+
     myGenotype<-GAPIT.Genotype(G=NULL,GD=cbind(as.data.frame(GT),as.data.frame(GD)),GM=GI,KI=NULL,kinship.algorithm=kinship.algorithm,PCA.total=0,SNP.fraction=SNP.fraction,SNP.test=SNP.test,
                   file.path=file.path,file.from=file.from, file.to=file.to, file.total=file.total, file.fragment = file.fragment, file.G=file.G, 
                   file.Ext.G=file.Ext.G,file.GD=file.GD, file.GM=file.GM, file.Ext.GD=file.Ext.GD,file.Ext.GM=file.Ext.GM,
@@ -271,6 +270,7 @@ if(!byPass & (!is.null(GK) | !is.null(GP)))
   Memory=myGenotype$Memory
 
   KI=myGenotype$KI
+
 #update group set by new KI
   nk=nrow(KI)
 GROUP=GROUP[GROUP<=nk]
@@ -306,12 +306,6 @@ if(!byPass)
 if(count==1)print("-------Mixed model with Kinship-----------------------------")
 if(group<ncol(X0)+1) group=1 # the emma function (emma.delta.REML.dLL.w.Z) does not allow K has dim less then CV. turn to GLM (group=1)
   
-print("Debug")
-print("Compressing...")
-print(dim(KI))
-print((ca))
-print((kt))
-print((group))
 cp <- GAPIT.Compress(KI=KI,kinship.cluster=ca,kinship.group=kt,GN=group,Timmer=Timmer,Memory=Memory)
 Timmer=cp$Timmer
 Memory=cp$Memory
@@ -319,7 +313,7 @@ Memory=cp$Memory
 Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="PreP3D 2_cp")
 Memory=GAPIT.Memory(Memory=Memory,Infor="PreP3D 2_cp")
 
-print("BK...")
+#print("BK...")
 bk <- GAPIT.Block(Z=Z,GA=cp$GA,KG=cp$KG)
 
 Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="PreP3D 2_bk")
@@ -351,7 +345,7 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="Prio PreP3D")
 
 #write.table(zc$Z, "Z.csv", quote = FALSE, sep = ",", row.names = FALSE,col.names = TRUE)
 
-print(dim(as.matrix(as.data.frame(GD[GTindex,colInclude]))))
+#print(dim(as.matrix(as.data.frame(GD[GTindex,colInclude]))))
 p3d <- GAPIT.EMMAxP3D(ys=ys,xs=as.matrix(as.data.frame(GD[GTindex,colInclude])),K = as.matrix(bk$KW) ,Z=matrix(as.numeric(as.matrix(zc$Z[,-1])),nrow=zrow,ncol=zcol),X0=X0,CVI=CVI,CV.Inheritance=CV.Inheritance,GI=GI,SNP.P3D=SNP.P3D,Timmer=Timmer,Memory=Memory,fullGD=fullGD,
         SNP.permutation=SNP.permutation, GP=GP,
 			 file.path=file.path,file.from=file.from,file.to=file.to,file.total=file.total, file.fragment = file.fragment, byFile=byFile, file.G=file.G,file.Ext.G=file.Ext.G,file.GD=file.GD, file.GM=file.GM, file.Ext.GD=file.Ext.GD,file.Ext.GM=file.Ext.GM,
@@ -631,12 +625,6 @@ print("--------------  Sandwich bottom with raw burger------------------------")
  if(Model.selection == FALSE){
   #update KI with the best likelihood
   if(is.null(sangwich.bottom)) KI=KI.save
-
-print("Debug")
-print(dim(KI))
-print(ca)
-print(group)
-print(kt)
 
   cp <- GAPIT.Compress(KI=KI,kinship.cluster=ca,kinship.group=kt,GN=group,Timmer=Timmer,Memory=Memory)
   Timmer=cp$Timmer

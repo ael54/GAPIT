@@ -5,7 +5,7 @@ function(KW,KO,KWO,GAU,UW){
 #Authors: Zhiwu Zhang 
 # Last update: April 17, 2011 
 ##############################################################################################
-print(length(UW))
+#print(length(UW))
 UO=try(t(KWO)%*%solve(KW)%*%UW)
 if(inherits(UO, "try-error")) UO=t(KWO)%*%ginv(KW)%*%UW
 
@@ -13,7 +13,6 @@ n=ncol(UW) #get number of columns, add additional for individual name
 
 #Assign BLUP of group to its individuals
 BLUP=data.frame(as.matrix(GAU[,1:4]))
-
 BLUP.W=BLUP[which(GAU[,3]==1),]
 order.W=order(as.numeric(as.matrix(BLUP.W[,4])))
 ID.W=as.numeric(as.matrix(BLUP.W[order.W,4]))

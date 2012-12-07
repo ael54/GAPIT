@@ -98,7 +98,7 @@ Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="CP calculation")
 Memory=GAPIT.Memory(Memory=Memory,Infor="cp calculation")
 
 # add line names 
-GA <- data.frame(group.membership)
+#GA <- data.frame(group.membership)
 GA <- data.frame(cbind(as.character(line.names),as.numeric(group.membership) ))
 
 #Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="CP Final") 
