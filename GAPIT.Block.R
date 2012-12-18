@@ -39,16 +39,23 @@ numWithout=length(grp.2)
 
 order.1=1:length(grp.1)
 order.2=1:length(grp.2)
-if(numWithout >0) grpblock=as.matrix(rbind(cbind(grp.1,1,order.1), cbind(grp.2,2,order.2)))
+if(numWithout >0) grpblock=as.matrix(rbind(cbind(grp.1,1,order.1), cbind(grp.2,   2,    order.2)))
 if(numWithout==0) grpblock=as.matrix(      cbind(grp.1,1,order.1),                       )
 
 order.block=order(as.matrix(GAU[,3]))
 colnames(grpblock)=c("grp","block","ID")
 
-GAU0 <- merge(GAU[order.block,-3], grpblock, by.x = "X2", by.y = "grp")
-GAU=GAU0[,c(2,1,3,4)]
+#Indicators: 1-Phenotype, 1.5- unphenotyped but in a group with other phenotyped, 2-rest  (Zhiwu, Dec 7,2012)
+#GAU0 <- merge(GAU[order.block,-3], grpblock, by.x = "X2", by.y = "grp")
+#GAU=GAU0[,c(2,1,3,4)]
 
-
+GAU1 <- merge(GAU[order.block,], grpblock, by.x = "X2", by.y = "grp")
+#print(GAU1)
+GAU1[,4]=(as.numeric(GAU1[,3])+as.numeric(GAU1[,4]))/2
+#print(GAU1)
+GAU=GAU1[,c(2,1,4,5)]
+#print(GAU)
+#stop("debug")
 KW=KG[grp.1,grp.1]
 KO=KG[grp.2,grp.2]
 KWO=KG[grp.1,grp.2]

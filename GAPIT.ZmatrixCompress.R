@@ -13,7 +13,8 @@ taxa=as.data.frame(Z[-1,1])
 GAU0=GAU[effect.GAU%in%effect.Z,]
 order.GAU=order(GAU0[,1])
 GAU1 <- GAU0[order.GAU,]
-id.1=GAU1[which(GAU1[,3]==1),4]
+#id.1=GAU1[which(GAU1[,3]==1),4]
+id.1=GAU1[which(GAU1[,3]<2),4]
 n=max(as.numeric(as.vector(id.1)))
 x=as.numeric(as.matrix(GAU1[,4]))
 DS=diag(n)[x,]

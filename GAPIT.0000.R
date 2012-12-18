@@ -9,7 +9,7 @@ function(){
 
 #Designed by Zhiwu Zhang
 #Writen by Alex Lipka, Feng Tian and Zhiwu Zhang
-GAPIT.Version="2.21, December 6, 2012 (Full GS output)"
+GAPIT.Version="2.22, December 7, 2012 (GS indicator: 1-Phe, 1.5-noPhe&GRPPhe, 2-rest)"
 return(GAPIT.Version)
 }
 
