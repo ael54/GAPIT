@@ -724,6 +724,9 @@ theMAF <- try(read.table(paste("GAPIT.TMP.maf.",name.of.trait,file,".",frag,".tx
 thenobs <- try(read.table(paste("GAPIT.TMP.nobs.",name.of.trait,file,".",frag,".txt",sep=""),head= FALSE),silent=TRUE)
 thersquare_base <- try(read.table(paste("GAPIT.TMP.rsquare.base.",name.of.trait,file,".",frag,".txt",sep=""),head= FALSE),silent=TRUE)
 thersquare <- try(read.table(paste("GAPIT.TMP.rsquare.",name.of.trait,file,".",frag,".txt",sep=""),head= FALSE),silent=TRUE)
+          thersquare <- try(read.table(paste("GAPIT.TMP.df.",name.of.trait,file,".",frag,".txt",sep=""),head= FALSE),silent=TRUE)
+          thersquare <- try(read.table(paste("GAPIT.TMP.tvalue.",name.of.trait,file,".",frag,".txt",sep=""),head= FALSE),silent=TRUE)
+          thersquare <- try(read.table(paste("GAPIT.TMP.stderr.",name.of.trait,file,".",frag,".txt",sep=""),head= FALSE),silent=TRUE)
 theeffect.est <- try(read.table(paste("GAPIT.TMP.effect.est.",name.of.trait,file,".",frag,".txt",sep=""),head= FALSE),silent=TRUE)
 
 
@@ -743,6 +746,9 @@ if(inherits(theGI, "try-error"))  {
   colnames(thenobs )="nobs"
   colnames(thersquare_base) = "Base.Model.R.square"  
   colnames(thersquare) = "Model.R.square"
+            colnames(thedf) = "Model.DF"
+            colnames(thetvalue) = "Model.tvalue"
+            colnames(thestderr) = "Model.stderr"
   colnames(theeffect.est) = "Effect.Est"    
   colnames(theGI) = colnames(GI)
  
@@ -758,6 +764,9 @@ if(inherits(theGI, "try-error"))  {
     allnobs=thenobs
     allrsquare_base=thersquare_base
     allrsquare=thersquare
+              alldf=thedf
+              alltvalue=thetvalue
+              allstderr=thestderr
     alleffect.est=theeffect.est
   }else{
     allP=as.data.frame(rbind(as.matrix(allP),as.matrix(theP))  )
@@ -765,6 +774,9 @@ if(inherits(theGI, "try-error"))  {
     allnobs=as.data.frame(rbind(as.matrix(allnobs),as.matrix(thenobs)))
     allrsquare_base=as.data.frame(rbind(as.matrix(allrsquare_base),as.matrix(thersquare_base)))
     allrsquare=as.data.frame(rbind(as.matrix(allrsquare),as.matrix(thersquare)))
+              alldf=as.data.frame(rbind(as.matrix(alldf),as.matrix(thedf)))
+              alltvalue=as.data.frame(rbind(as.matrix(alltvalue),as.matrix(thetvalue)))
+              allstderr=as.data.frame(rbind(as.matrix(allstderr),as.matrix(thestderr)))
     alleffect.est=as.data.frame(rbind(as.matrix(alleffect.est),as.matrix(theeffect.est)))
     GI=as.data.frame(rbind(as.matrix(GI),as.matrix(theGI)))
   }
@@ -783,6 +795,9 @@ frag=frag+1   #Progress to next fragment
   p3d$nobs=allnobs
   p3d$rsquare_base=allrsquare_base
   p3d$rsquare=allrsquare
+      p3d$df=alldf
+      p3d$tvalue=alltvalue
+      p3d$stderr=allstderr
   p3d$effect.est=alleffect.est
   
 #Delete all the GAPIT.TMP files
@@ -840,6 +855,9 @@ nobs=p3d$nobs
 maf=p3d$maf
 rsquare_base=p3d$rsquare_base
 rsquare=p3d$rsquare
+      df=p3d$df
+      tvalue=p3d$tvalue
+      stderr=p3d$stderr
 effect.est=p3d$effect.est
 
   
@@ -972,8 +990,11 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="Manhattan plot")
   #GAPIT.Table(final.table = PWIP$PWIP, name.of.trait = name.of.trait,SNP.FDR=SNP.FDR)
   GWAS=PWIP$PWIP[PWIP$PWIP[,9]<=SNP.FDR,]
 
+        DTS=cbind(GI,df,tvalue,stderr)
+        colnames(DTS)=c("SNP","Chromosome","Position","DF","std Error","t Value")
   if(file.output){
    write.table(GWAS, paste("GAPIT.", name.of.trait, ".GWAS.Results.csv", sep = ""), quote = FALSE, sep = ",", row.names = FALSE,col.names = TRUE)
+          write.table(DTS, paste("GAPIT.", name.of.trait, ".Df.tValue.StdErr.csv", sep = ""), quote = FALSE, sep = ",", row.names = FALSE,col.names = TRUE)
    if(!byPass) write.table(GWAS.2, paste("GAPIT.", name.of.trait, ".Allelic_Effect_Estimates.csv", sep = ""), quote = FALSE, sep = ",", row.names = FALSE,col.names = TRUE)
   }
 

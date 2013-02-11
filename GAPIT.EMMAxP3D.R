@@ -1,3 +1,4 @@
+
 `GAPIT.EMMAxP3D` <-
 function(ys,xs,K=NULL,Z=NULL,X0=NULL,CVI=NULL,CV.Inheritance=NULL,GI=NULL,GP=NULL,
 		file.path=NULL,file.from=NULL,file.to=NULL,file.total=1, genoFormat="Hapmap", file.fragment=NULL,byFile=FALSE,fullGD=TRUE,SNP.fraction=1,
@@ -363,6 +364,9 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="Before cleaning")
   rm(maf)
   rm(rsquare_base)
   rm(rsquare)
+            rm(df)
+            rm(tvalue)
+            rm(stderr)
   gc()
 
 Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="After cleaning")
@@ -377,6 +381,9 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="After cleaning")
   maf <- matrix(nrow = m, ncol = g)
   rsquare_base <- matrix(nrow = m, ncol = g)
   rsquare <- matrix(nrow = m, ncol = g)
+            df <- matrix(nrow = m, ncol = g)
+            tvalue <- matrix(nrow = m, ncol = g)
+            stderr <- matrix(nrow = m, ncol = g)
   #print(paste("Memory allocated.",sep=""))
   Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Memory allocation")
   Memory=GAPIT.Memory(Memory=Memory,Infor="Memory allocation")
@@ -432,6 +439,9 @@ for (i in loopStart:mloop){
         rsquare[i, ] <- rep(NA,g)
         rsquare_base[i, ]<-rep(NA,g)
         maf[i, ] <- rep(0, g)
+                    df[i, ] <- rep(NA,g)
+                    tvalue[i, ] <- rep(NA,g)
+                    stderr[i, ] <- rep(NA,g)
         normalCase=FALSE
         x.prev= vector(length = 0)
        }
@@ -497,6 +507,9 @@ for (i in loopStart:mloop){
       ps[i, ] = rep(1, g)
       rsquare[i, ] <- rep(NA,g)
       rsquare_base[i, ]<-rep(NA,g)
+                df[i, ] <- rep(NA,g)
+                tvalue[i, ] <- rep(NA,g)
+                stderr[i, ] <- rep(NA,g)
       normalCase=FALSE
     }else if(identical(x.prev, xv))     #Situation of the SNP is identical to previous
     {
@@ -508,6 +521,9 @@ for (i in loopStart:mloop){
         ps[i, ] <- ps[i - 1, ]
         rsquare[i, ] <- rsquare[i - 1, ]
         rsquare_base[i, ] <-rsquare_base[i - 1, ]
+                  df[i, ] <- df[i - 1, ]
+                  tvalue[i, ] <- tvalue[i - 1, ]
+                  stderr[i, ] <- stderr[i - 1, ]
         normalCase=FALSE
       }
     }
@@ -945,7 +961,10 @@ gc()
       rsquare_base[i, ] <- rsquare_base_intitialized
       rsquare[i, ] <- 1-exp(-(2/length(yv))*(logLM-logL0))
 
-        
+                  #Calculate df, t value and standard error _xiaolei changed
+                  df[i,] <- dfs[i,]
+                  tvalue[i,] <- stats[i, j]
+                  stderr[i,] <- beta[ncol(CVI)+1]/stats[i, j]
       }
 #-------------------------------------------------------------------------------------------------------------------->
 
@@ -966,6 +985,9 @@ if(!fullGD)
   write.table(nobs, paste("GAPIT.TMP.nobs.",name.of.trait,file,".",frag,".txt",sep=""), quote = FALSE, sep = "\t", row.names = FALSE,col.names = FALSE)
   write.table(rsquare_base, paste("GAPIT.TMP.rsquare.base.",name.of.trait,file,".",frag,".txt",sep=""), quote = FALSE, sep = "\t", row.names = FALSE,col.names = FALSE)
   write.table(rsquare, paste("GAPIT.TMP.rsquare.",name.of.trait,file,".",frag,".txt",sep=""), quote = FALSE, sep = "\t", row.names = FALSE,col.names = FALSE)
+              write.table(rsquare, paste("GAPIT.TMP.df.",name.of.trait,file,".",frag,".txt",sep=""), quote = FALSE, sep = "\t", row.names = FALSE,col.names = FALSE)
+              write.table(rsquare, paste("GAPIT.TMP.tvalue.",name.of.trait,file,".",frag,".txt",sep=""), quote = FALSE, sep = "\t", row.names = FALSE,col.names = FALSE)
+              write.table(rsquare, paste("GAPIT.TMP.stderr.",name.of.trait,file,".",frag,".txt",sep=""), quote = FALSE, sep = "\t", row.names = FALSE,col.names = FALSE)
   write.table(effect.est, paste("GAPIT.TMP.effect.est.",name.of.trait,file,".",frag,".txt",sep=""), quote = FALSE, sep = "\t", row.names = FALSE,col.names = FALSE)
  
   #rm(dfs,stats,ps,nobs,maf,GI)   #This cause problem on return
@@ -987,7 +1009,7 @@ Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="GWAS done for this Trait")
 Memory=GAPIT.Memory(Memory=Memory,Infor="GWAS done for this Trait")
 
 
-return(list(ps = ps, REMLs = -2*REMLs, stats = stats, effect.est = effect.est, rsquare_base = rsquare_base, rsquare = rsquare, dfs = dfs,maf=maf,nobs = nobs,Timmer=Timmer,Memory=Memory,
+    return(list(ps = ps, REMLs = -2*REMLs, stats = stats, effect.est = effect.est, rsquare_base = rsquare_base, rsquare = rsquare, dfs = dfs, df = df, tvalue = tvalue, stderr = stderr,maf=maf,nobs = nobs,Timmer=Timmer,Memory=Memory,
         vgs = vgs, ves = ves, BLUP = BLUP, BLUP_Plus_Mean = BLUP_Plus_Mean,
         PEV = PEV, BLUE=BLUE, logLM = logLM))
 

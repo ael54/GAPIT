@@ -9,7 +9,7 @@ function(){
 
 #Designed by Zhiwu Zhang
 #Writen by Alex Lipka, Feng Tian and Zhiwu Zhang
-GAPIT.Version="2.22, December 7, 2012 (GS indicator: 1-Phe, 1.5-noPhe&GRPPhe, 2-rest)"
+GAPIT.Version="2.23, January 7, 2012 (Calculate STE by Xiaolei Liu)"
 return(GAPIT.Version)
 }
 
