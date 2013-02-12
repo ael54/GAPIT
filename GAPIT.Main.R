@@ -991,7 +991,9 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="Manhattan plot")
   GWAS=PWIP$PWIP[PWIP$PWIP[,9]<=SNP.FDR,]
 
         DTS=cbind(GI,df,tvalue,stderr)
-        colnames(DTS)=c("SNP","Chromosome","Position","DF","std Error","t Value")
+		myROC=GAPIT.ROC(t=tvalue,se=stderr,Vp=var(ys),trait=name.of.trait)
+		
+        colnames(DTS)=c("SNP","Chromosome","Position","DF","t Value","std Error")
   if(file.output){
    write.table(GWAS, paste("GAPIT.", name.of.trait, ".GWAS.Results.csv", sep = ""), quote = FALSE, sep = ",", row.names = FALSE,col.names = TRUE)
           write.table(DTS, paste("GAPIT.", name.of.trait, ".Df.tValue.StdErr.csv", sep = ""), quote = FALSE, sep = ",", row.names = FALSE,col.names = TRUE)
