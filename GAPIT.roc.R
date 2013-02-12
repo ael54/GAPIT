@@ -6,7 +6,7 @@ function(t=NULL,se=NULL,Vp=1,trait=""){
 #Output: A table and plot
 #Requirment: error df is same for all SMP or large
 #Authors: Zhiwu Zhang
-# Last update: Feb 13, 2013 
+# Last update: Feb 15, 2013 
 ##############################################################################################
 
 #test
