@@ -724,9 +724,9 @@ theMAF <- try(read.table(paste("GAPIT.TMP.maf.",name.of.trait,file,".",frag,".tx
 thenobs <- try(read.table(paste("GAPIT.TMP.nobs.",name.of.trait,file,".",frag,".txt",sep=""),head= FALSE),silent=TRUE)
 thersquare_base <- try(read.table(paste("GAPIT.TMP.rsquare.base.",name.of.trait,file,".",frag,".txt",sep=""),head= FALSE),silent=TRUE)
 thersquare <- try(read.table(paste("GAPIT.TMP.rsquare.",name.of.trait,file,".",frag,".txt",sep=""),head= FALSE),silent=TRUE)
-          thersquare <- try(read.table(paste("GAPIT.TMP.df.",name.of.trait,file,".",frag,".txt",sep=""),head= FALSE),silent=TRUE)
-          thersquare <- try(read.table(paste("GAPIT.TMP.tvalue.",name.of.trait,file,".",frag,".txt",sep=""),head= FALSE),silent=TRUE)
-          thersquare <- try(read.table(paste("GAPIT.TMP.stderr.",name.of.trait,file,".",frag,".txt",sep=""),head= FALSE),silent=TRUE)
+          thedf  <- try(read.table(paste("GAPIT.TMP.df.",name.of.trait,file,".",frag,".txt",sep=""),head= FALSE),silent=TRUE)
+          thetvalue  <- try(read.table(paste("GAPIT.TMP.tvalue.",name.of.trait,file,".",frag,".txt",sep=""),head= FALSE),silent=TRUE)
+          thestderr  <- try(read.table(paste("GAPIT.TMP.stderr.",name.of.trait,file,".",frag,".txt",sep=""),head= FALSE),silent=TRUE)
 theeffect.est <- try(read.table(paste("GAPIT.TMP.effect.est.",name.of.trait,file,".",frag,".txt",sep=""),head= FALSE),silent=TRUE)
 
 
