@@ -4178,7 +4178,7 @@ return (list(Timmer=Timmer,Compression=Compression,kinship.optimum=theK.return, 
 
 `GAPIT.Manhattan` <-
 function(GI.MP = NULL, name.of.trait = "Trait", 
-                   plot.type = "Genomewise",DPP=50000,cutOff=0.01){
+                   plot.type = "Genomewise",DPP=50000,cutOff=0.01,band=5){
 #Object: Make a Manhattan Plot
 #Options for plot.type = "Separate_Graph_for_Each_Chromosome" and "Same_Graph_for_Each_Chromosome" 
 #Output: A pdf of the Manhattan Plot
@@ -4264,6 +4264,16 @@ abline(h=bonferroniCutOff,col="forestgreen")
 if(plot.type == "Genomewise")
 {
 print("Manhattan ploting Genomewise")
+
+#Set corlos for chromosomes
+nchr=max(chm.to.analyze)
+ncycle=ceiling(nchr/band)
+ncolor=band*ncycle
+palette(rainbow(ncolor+1))
+cycle1=seq(1,nchr,by= ncycle)
+thecolor=cycle1
+for(i in 2:ncycle){thecolor=c(thecolor,cycle1+(i-1))}
+
   
   GI.MP <- GI.MP[order(GI.MP[,2]),]
   GI.MP <- GI.MP[order(GI.MP[,1]),]
@@ -4297,11 +4307,13 @@ print("Manhattan ploting Genomewise")
 	
 #print("Manhattan XY created")
 
-  pdf(paste("GAPIT.", name.of.trait,".Manhattan-Plot.Genomewise.pdf" ,sep = ""), width = 10)
-  par(mar = c(5,5,5,1))
+  pdf(paste("GAPIT.", name.of.trait,".Manhattan-Plot.Genomewise.pdf" ,sep = ""), width = 11,height=5)
+  par(mar = c(5,6,5,1))
 
- plot(y~x,xlab=expression(Chromosome),ylab=expression(-log[10](italic(p))) ,
-       cex.lab=2,col=ifelse(z%%2==0,"orangered","navy"),axes=FALSE,type = "p",pch=20,main = paste(name.of.trait,sep=" "))
+#plot(y~x,xlab=expression(Chromosome),ylab=expression(-log[10](italic(p))) ,
+#       cex.lab=2,col=ifelse(z%%2==0,"orangered","navy"),axes=FALSE,type = "p",pch=20,main = paste(name.of.trait,sep=" "))
+plot(y~x,xlab=expression(Chromosome),ylab=expression(-log[10](italic(p))) ,
+       cex.lab=2,col=thecolor[z],axes=FALSE,type = "p",pch=20,main = paste(name.of.trait,sep=" "))
  abline(h=bonferroniCutOff,col="forestgreen")
  
  axis(1, at=ticks,cex.axis=1.5,labels=chm.to.analyze,tick=F)
