@@ -140,7 +140,7 @@ plot(y~x,xlab=expression(Chromosome),ylab=expression(-log[10](italic(p))) ,
  
  axis(1, at=ticks,cex.axis=1.5,labels=chm.to.analyze,tick=F)
   axis(2, at=1:y.lim,cex.axis=1.5,labels=1:y.lim,tick=F)
-  box()
+  box()  
   dev.off()
 print("Manhattan done Genomewise")
   

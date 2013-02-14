@@ -9,7 +9,7 @@ function(){
 
 #Designed by Zhiwu Zhang
 #Writen by Alex Lipka, Feng Tian and Zhiwu Zhang
-GAPIT.Version="2.24, January 12, 2012 (Assemble power vs fdr (ROC))"
+GAPIT.Version="2.25, January 14, 2012 (Confidence interval for QQ plot)"
 return(GAPIT.Version)
 }
 
