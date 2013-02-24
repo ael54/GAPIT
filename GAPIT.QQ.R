@@ -46,7 +46,7 @@ if(plot.type == "log_P_values")
       if(i==0)i=1
       c95[j] <- qbeta(0.95,i,N-i+1)
       c05[j] <- qbeta(0.05,i,N-i+1)
-      print(c(j,i,c95[j],c05[j]))
+      #print(c(j,i,c95[j],c05[j]))
     }
     plot(log.Quantiles, -log10(c05), xlim = c(0,max(log.Quantiles)), ylim = c(0,max(log.P.values)), type="l",lty=5, axes=FALSE, xlab="", ylab="",col="black")
     par(new=T)
