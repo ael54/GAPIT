@@ -4304,7 +4304,16 @@ for(i in 2:ncycle){thecolor=c(thecolor,cycle1+(i-1))}
 	x=x0[index]
 	y=y0[index]
 	z=z0[index]
-	
+
+#Draw circles with same size and different thikness
+size=1
+ratio=5
+base=1
+themax=max(y)
+themin=min(y)
+wd=((y-themin+base)/(themax-themin+base))*size*ratio
+s=size-wd/ratio/2
+
 #print("Manhattan XY created")
 
   pdf(paste("GAPIT.", name.of.trait,".Manhattan-Plot.Genomewise.pdf" ,sep = ""), width = 11,height=5)
@@ -4312,9 +4321,13 @@ for(i in 2:ncycle){thecolor=c(thecolor,cycle1+(i-1))}
 
 #plot(y~x,xlab=expression(Chromosome),ylab=expression(-log[10](italic(p))) ,
 #       cex.lab=2,col=ifelse(z%%2==0,"orangered","navy"),axes=FALSE,type = "p",pch=20,main = paste(name.of.trait,sep=" "))
+#plot(y~x,xlab=expression(Chromosome),ylab=expression(-log[10](italic(p))) ,
+#       cex.lab=2,col=thecolor[z],axes=FALSE,type = "p",pch=20,main = paste(name.of.trait,sep=" "))
 plot(y~x,xlab=expression(Chromosome),ylab=expression(-log[10](italic(p))) ,
-       cex.lab=2,col=thecolor[z],axes=FALSE,type = "p",pch=20,main = paste(name.of.trait,sep=" "))
- abline(h=bonferroniCutOff,col="forestgreen")
+     cex.lab=2,col=thecolor[z],axes=FALSE,type = "p",pch=1,lwd=wd,cex=s,main = paste(name.of.trait,sep=" "))
+
+
+abline(h=bonferroniCutOff,col="forestgreen")
  
  axis(1, at=ticks,cex.axis=1.5,labels=chm.to.analyze,tick=F)
   axis(2, at=1:y.lim,cex.axis=1.5,labels=1:y.lim,tick=F)
