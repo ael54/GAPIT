@@ -352,7 +352,7 @@ if(!is.null(xs))  {
   
   m <- ncol(xs) #number of SNPs
   t <- nrow(xs) #number of individuals
-
+ 
 Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Before cleaning")
 Memory=GAPIT.Memory(Memory=Memory,Infor="Before cleaning")
   #allocate spaces for SNPs
@@ -464,8 +464,6 @@ for (i in loopStart:mloop){
 
        maf[i]=min(ss/ns,1-ss/ns)
        nobs[i]=ns
-        #if(i == 1) write.table(xs[vids,i], "DEBUG.xs[vidsi].csv", quote = FALSE, sep = ",", row.names = FALSE,col.names = TRUE)
-        #if(i == 1) write.table(xv, "DEBUG.xv.csv", quote = FALSE, sep = ",", row.names = FALSE,col.names = TRUE)
        
         q1 <- q0 + ncol(xv)    # This is done so that parameter estimates for all indicator variables are included
 
@@ -985,9 +983,9 @@ if(!fullGD)
   write.table(nobs, paste("GAPIT.TMP.nobs.",name.of.trait,file,".",frag,".txt",sep=""), quote = FALSE, sep = "\t", row.names = FALSE,col.names = FALSE)
   write.table(rsquare_base, paste("GAPIT.TMP.rsquare.base.",name.of.trait,file,".",frag,".txt",sep=""), quote = FALSE, sep = "\t", row.names = FALSE,col.names = FALSE)
   write.table(rsquare, paste("GAPIT.TMP.rsquare.",name.of.trait,file,".",frag,".txt",sep=""), quote = FALSE, sep = "\t", row.names = FALSE,col.names = FALSE)
-              write.table(rsquare, paste("GAPIT.TMP.df.",name.of.trait,file,".",frag,".txt",sep=""), quote = FALSE, sep = "\t", row.names = FALSE,col.names = FALSE)
-              write.table(rsquare, paste("GAPIT.TMP.tvalue.",name.of.trait,file,".",frag,".txt",sep=""), quote = FALSE, sep = "\t", row.names = FALSE,col.names = FALSE)
-              write.table(rsquare, paste("GAPIT.TMP.stderr.",name.of.trait,file,".",frag,".txt",sep=""), quote = FALSE, sep = "\t", row.names = FALSE,col.names = FALSE)
+  write.table(df, paste("GAPIT.TMP.df.",name.of.trait,file,".",frag,".txt",sep=""), quote = FALSE, sep = "\t", row.names = FALSE,col.names = FALSE)
+  write.table(tvalue, paste("GAPIT.TMP.tvalue.",name.of.trait,file,".",frag,".txt",sep=""), quote = FALSE, sep = "\t", row.names = FALSE,col.names = FALSE)
+  write.table(stderr, paste("GAPIT.TMP.stderr.",name.of.trait,file,".",frag,".txt",sep=""), quote = FALSE, sep = "\t", row.names = FALSE,col.names = FALSE)
   write.table(effect.est, paste("GAPIT.TMP.effect.est.",name.of.trait,file,".",frag,".txt",sep=""), quote = FALSE, sep = "\t", row.names = FALSE,col.names = FALSE)
  
   #rm(dfs,stats,ps,nobs,maf,GI)   #This cause problem on return

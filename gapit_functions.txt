@@ -1183,7 +1183,7 @@ if(!is.null(xs))  {
   
   m <- ncol(xs) #number of SNPs
   t <- nrow(xs) #number of individuals
-
+ 
 Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Before cleaning")
 Memory=GAPIT.Memory(Memory=Memory,Infor="Before cleaning")
   #allocate spaces for SNPs
@@ -1295,8 +1295,6 @@ for (i in loopStart:mloop){
 
        maf[i]=min(ss/ns,1-ss/ns)
        nobs[i]=ns
-        #if(i == 1) write.table(xs[vids,i], "DEBUG.xs[vidsi].csv", quote = FALSE, sep = ",", row.names = FALSE,col.names = TRUE)
-        #if(i == 1) write.table(xv, "DEBUG.xv.csv", quote = FALSE, sep = ",", row.names = FALSE,col.names = TRUE)
        
         q1 <- q0 + ncol(xv)    # This is done so that parameter estimates for all indicator variables are included
 
@@ -1816,9 +1814,9 @@ if(!fullGD)
   write.table(nobs, paste("GAPIT.TMP.nobs.",name.of.trait,file,".",frag,".txt",sep=""), quote = FALSE, sep = "\t", row.names = FALSE,col.names = FALSE)
   write.table(rsquare_base, paste("GAPIT.TMP.rsquare.base.",name.of.trait,file,".",frag,".txt",sep=""), quote = FALSE, sep = "\t", row.names = FALSE,col.names = FALSE)
   write.table(rsquare, paste("GAPIT.TMP.rsquare.",name.of.trait,file,".",frag,".txt",sep=""), quote = FALSE, sep = "\t", row.names = FALSE,col.names = FALSE)
-              write.table(rsquare, paste("GAPIT.TMP.df.",name.of.trait,file,".",frag,".txt",sep=""), quote = FALSE, sep = "\t", row.names = FALSE,col.names = FALSE)
-              write.table(rsquare, paste("GAPIT.TMP.tvalue.",name.of.trait,file,".",frag,".txt",sep=""), quote = FALSE, sep = "\t", row.names = FALSE,col.names = FALSE)
-              write.table(rsquare, paste("GAPIT.TMP.stderr.",name.of.trait,file,".",frag,".txt",sep=""), quote = FALSE, sep = "\t", row.names = FALSE,col.names = FALSE)
+  write.table(df, paste("GAPIT.TMP.df.",name.of.trait,file,".",frag,".txt",sep=""), quote = FALSE, sep = "\t", row.names = FALSE,col.names = FALSE)
+  write.table(tvalue, paste("GAPIT.TMP.tvalue.",name.of.trait,file,".",frag,".txt",sep=""), quote = FALSE, sep = "\t", row.names = FALSE,col.names = FALSE)
+  write.table(stderr, paste("GAPIT.TMP.stderr.",name.of.trait,file,".",frag,".txt",sep=""), quote = FALSE, sep = "\t", row.names = FALSE,col.names = FALSE)
   write.table(effect.est, paste("GAPIT.TMP.effect.est.",name.of.trait,file,".",frag,".txt",sep=""), quote = FALSE, sep = "\t", row.names = FALSE,col.names = FALSE)
  
   #rm(dfs,stats,ps,nobs,maf,GI)   #This cause problem on return
@@ -3868,8 +3866,6 @@ thersquare <- try(read.table(paste("GAPIT.TMP.rsquare.",name.of.trait,file,".",f
           thestderr  <- try(read.table(paste("GAPIT.TMP.stderr.",name.of.trait,file,".",frag,".txt",sep=""),head= FALSE),silent=TRUE)
 theeffect.est <- try(read.table(paste("GAPIT.TMP.effect.est.",name.of.trait,file,".",frag,".txt",sep=""),head= FALSE),silent=TRUE)
 
-
-
 if(inherits(theGI, "try-error"))  {
 #if(nrow(theGI)<1){
   numSNP=0
@@ -3999,7 +3995,7 @@ rsquare=p3d$rsquare
       stderr=p3d$stderr
 effect.est=p3d$effect.est
 
-  
+
 Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Extract p3d results")
 Memory=GAPIT.Memory(Memory=Memory,Infor="Extract p3d results")
   
@@ -4128,11 +4124,13 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="Manhattan plot")
   print("Association table..." )
   #GAPIT.Table(final.table = PWIP$PWIP, name.of.trait = name.of.trait,SNP.FDR=SNP.FDR)
   GWAS=PWIP$PWIP[PWIP$PWIP[,9]<=SNP.FDR,]
-
+  print("Joining tvalue and stderr" )
         DTS=cbind(GI,df,tvalue,stderr)
-		myROC=GAPIT.ROC(t=tvalue,se=stderr,Vp=var(ys),trait=name.of.trait)
-		
-        colnames(DTS)=c("SNP","Chromosome","Position","DF","t Value","std Error")
+        colnames(DTS)=c("SNP","Chromosome","Position","DF","t Value","std Error")		
+  print("Creating ROC table and plot" )
+	myROC=GAPIT.ROC(t=tvalue,se=stderr,Vp=var(ys),trait=name.of.trait)
+  print("ROC table and plot created" )
+
   if(file.output){
    write.table(GWAS, paste("GAPIT.", name.of.trait, ".GWAS.Results.csv", sep = ""), quote = FALSE, sep = ",", row.names = FALSE,col.names = TRUE)
           write.table(DTS, paste("GAPIT.", name.of.trait, ".Df.tValue.StdErr.csv", sep = ""), quote = FALSE, sep = ",", row.names = FALSE,col.names = TRUE)
@@ -5055,8 +5053,13 @@ coefficient=c(0,0.01,.02,.05,.1,.2,.3)
 #Power holder
 nf=length(FDR)
 nc=length(coefficient)
-n=length(t)
 power=matrix(NA,nf,nc)
+
+#Handler of matrix format
+if(length(t)==1)t=t[,1]
+if(length(se)==1)se=se[,1]
+
+n=length(t)
 
 #Discard negative
 t=abs(t)
@@ -5065,14 +5068,9 @@ t=abs(t)
 position=order(t,decreasing = TRUE)
 t=t[position]
 se=se[position]
-
 EFFECT=coefficient*sqrt(Vp)
 newbit=matrix(1/se,n,1)%*%EFFECT   #n by nc matrix
 tnew=newbit+t  #n by nc matrix
-
-#debug
-i=1
-j=1
 
 for (i in 1:nf){
 fdr=FDR[i]
@@ -5106,8 +5104,6 @@ lines(power[,i]~FDR, lwd=2,type="o",pch=i,col=i)
 legend("bottomright", colnames(power), pch = c(1:nc), lty = c(1,2),col=c(1:nc))
 
 dev.off()
-
-
 
 }   #GAPIT.ROC ends here
 

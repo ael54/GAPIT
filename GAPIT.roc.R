@@ -23,8 +23,13 @@ coefficient=c(0,0.01,.02,.05,.1,.2,.3)
 #Power holder
 nf=length(FDR)
 nc=length(coefficient)
-n=length(t)
 power=matrix(NA,nf,nc)
+
+#Handler of matrix format
+if(length(t)==1)t=t[,1]
+if(length(se)==1)se=se[,1]
+
+n=length(t)
 
 #Discard negative
 t=abs(t)
@@ -33,14 +38,9 @@ t=abs(t)
 position=order(t,decreasing = TRUE)
 t=t[position]
 se=se[position]
-
 EFFECT=coefficient*sqrt(Vp)
 newbit=matrix(1/se,n,1)%*%EFFECT   #n by nc matrix
 tnew=newbit+t  #n by nc matrix
-
-#debug
-i=1
-j=1
 
 for (i in 1:nf){
 fdr=FDR[i]
@@ -74,8 +74,6 @@ lines(power[,i]~FDR, lwd=2,type="o",pch=i,col=i)
 legend("bottomright", colnames(power), pch = c(1:nc), lty = c(1,2),col=c(1:nc))
 
 dev.off()
-
-
 
 }   #GAPIT.ROC ends here
 

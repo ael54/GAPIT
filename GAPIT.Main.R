@@ -729,8 +729,6 @@ thersquare <- try(read.table(paste("GAPIT.TMP.rsquare.",name.of.trait,file,".",f
           thestderr  <- try(read.table(paste("GAPIT.TMP.stderr.",name.of.trait,file,".",frag,".txt",sep=""),head= FALSE),silent=TRUE)
 theeffect.est <- try(read.table(paste("GAPIT.TMP.effect.est.",name.of.trait,file,".",frag,".txt",sep=""),head= FALSE),silent=TRUE)
 
-
-
 if(inherits(theGI, "try-error"))  {
 #if(nrow(theGI)<1){
   numSNP=0
@@ -860,7 +858,7 @@ rsquare=p3d$rsquare
       stderr=p3d$stderr
 effect.est=p3d$effect.est
 
-  
+
 Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Extract p3d results")
 Memory=GAPIT.Memory(Memory=Memory,Infor="Extract p3d results")
   
@@ -989,11 +987,13 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="Manhattan plot")
   print("Association table..." )
   #GAPIT.Table(final.table = PWIP$PWIP, name.of.trait = name.of.trait,SNP.FDR=SNP.FDR)
   GWAS=PWIP$PWIP[PWIP$PWIP[,9]<=SNP.FDR,]
-
+  print("Joining tvalue and stderr" )
         DTS=cbind(GI,df,tvalue,stderr)
-		myROC=GAPIT.ROC(t=tvalue,se=stderr,Vp=var(ys),trait=name.of.trait)
-		
-        colnames(DTS)=c("SNP","Chromosome","Position","DF","t Value","std Error")
+        colnames(DTS)=c("SNP","Chromosome","Position","DF","t Value","std Error")		
+  print("Creating ROC table and plot" )
+	myROC=GAPIT.ROC(t=tvalue,se=stderr,Vp=var(ys),trait=name.of.trait)
+  print("ROC table and plot created" )
+
   if(file.output){
    write.table(GWAS, paste("GAPIT.", name.of.trait, ".GWAS.Results.csv", sep = ""), quote = FALSE, sep = ",", row.names = FALSE,col.names = TRUE)
           write.table(DTS, paste("GAPIT.", name.of.trait, ".Df.tValue.StdErr.csv", sep = ""), quote = FALSE, sep = ",", row.names = FALSE,col.names = TRUE)
