@@ -4831,8 +4831,7 @@ if(plot.type == "log_P_values")
     log.P.values=log.P.values[index ]
     log.Quantiles=log.Quantiles[index]
 
-    pdf(paste("GAPIT.", name.of.trait,".QQ-Plot.pdf" ,sep = ""))
-    
+    pdf(paste("GAPIT.", name.of.trait,".QQ-Plot.pdf" ,sep = ""),width = 5,height=5)
     par(mar = c(5,6,5,3))
 
     #Add conficence interval
@@ -4841,16 +4840,23 @@ if(plot.type == "log_P_values")
     c95 <- rep(NA,N1)
     c05 <- rep(NA,N1)
     for(j in 1:N1){
-      i=floor((10^-log.Quantiles[j])*N)
+      i=ceiling((10^-log.Quantiles[j])*N)
       if(i==0)i=1
       c95[j] <- qbeta(0.95,i,N-i+1)
       c05[j] <- qbeta(0.05,i,N-i+1)
       #print(c(j,i,c95[j],c05[j]))
     }
-    plot(log.Quantiles, -log10(c05), xlim = c(0,max(log.Quantiles)), ylim = c(0,max(log.P.values)), type="l",lty=5, axes=FALSE, xlab="", ylab="",col="black")
-    par(new=T)
-    plot(log.Quantiles, -log10(c95), xlim = c(0,max(log.Quantiles)), ylim = c(0,max(log.P.values)), type="l",lty=5, axes=FALSE, xlab="", ylab="",col="black")
+    
+    #CI Lines
+    #plot(log.Quantiles, -log10(c05), xlim = c(0,max(log.Quantiles)), ylim = c(0,max(log.P.values)), type="l",lty=5, axes=FALSE, xlab="", ylab="",col="black")
+    #par(new=T)
+    #plot(log.Quantiles, -log10(c95), xlim = c(0,max(log.Quantiles)), ylim = c(0,max(log.P.values)), type="l",lty=5, axes=FALSE, xlab="", ylab="",col="black")
 
+    #CI shade
+    plot(NULL, xlim = c(0,max(log.Quantiles)), ylim = c(0,max(log.P.values)), type="l",lty=5, lwd = 2, axes=FALSE, xlab="", ylab="",col="gray")
+    index=length(c95):1
+    polygon(c(log.Quantiles[index],log.Quantiles),c(-log10(c05)[index],-log10(c95)),col='gray') 
+    
     #Diagonal line
     abline(a = 0, b = 1, col = "red",lwd=2)
 
