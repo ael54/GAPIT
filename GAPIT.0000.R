@@ -9,7 +9,7 @@ function(){
 
 #Designed by Zhiwu Zhang
 #Writen by Alex Lipka, Feng Tian and Zhiwu Zhang
-GAPIT.Version="2.25, January 14, 2012 (Confidence interval for QQ plot)"
+GAPIT.Version="2.30, March 17, 2013 (Orientation)"
 return(GAPIT.Version)
 }
 

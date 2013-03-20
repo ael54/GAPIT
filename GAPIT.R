@@ -12,7 +12,9 @@ function(Y=NULL,G=NULL,GD=NULL,GM=NULL,KI=NULL,Z=NULL,CV=NULL,CV.Inheritance=NUL
                 sangwich.top=NULL,sangwich.bottom=NULL,QC=TRUE,GTindex=NULL,LD=0.01,
                 file.output=TRUE,cutOff=0.01, Model.selection = FALSE,output.numerical = FALSE,
                 output.hapmap = FALSE, Create.indicator = FALSE,
-				QTN=NULL, QTN.round=1,QTN.limit=0, QTN.update=TRUE, QTN.method="Penalty", Major.allele.zero = FALSE){
+				QTN=NULL, QTN.round=1,QTN.limit=0, QTN.update=TRUE, QTN.method="Penalty", Major.allele.zero = FALSE,
+        method.GLM="fast.lm",method.sub="penalty",method.bin="static",bin.size=c(1000000),bin.selection=c(10,20,50,100,200,500,1000),
+        memo="",Prior=NULL,ncpus=1,orientation="col"){
 #Object: To perform GWAS and GPS (Genomic Prediction/Selection)
 #Designed by Zhiwu Zhang
 #Writen by Alex Lipka, Feng Tian and Zhiwu Zhang
@@ -27,6 +29,15 @@ Memory=GAPIT.Memory(Infor="GAPIT")
 
 #Genotype processing and calculation Kin and PC
 #First call to genotype to setup genotype data
+
+#BUS algorithm
+if(kinship.algorithm=="BUS") return (GAPIT.BUS(Y=Y,GDP=GD,GM=GM,CV=CV,
+  method.GLM=method.GLM,method.sub=method.sub,method.bin=method.bin,
+  bin.size=bin.size,bin.selection=bin.selection,file.output=file.output,
+  cutOff=cutOff,DPP=DPP,memo=memo,Prior=Prior,ncpus=ncpus,orientation=orientation))
+if(kinship.algorithm=="NONE")return (GAPIT.BUS(Y=Y,GDP=GD,GM=GM,CV=CV,
+  method.GLM=method.GLM,method.bin="NONE",file.output=file.output,
+  cutOff=cutOff,DPP=DPP,memo=memo,ncpus=ncpus,orientation=orientation))
 
 
 myGenotype<-GAPIT.Genotype(G=G,GD=GD,GM=GM,KI=KI,kinship.algorithm=kinship.algorithm,PCA.total=PCA.total,SNP.fraction=SNP.fraction,SNP.test=SNP.test,
@@ -77,10 +88,12 @@ print("Phenotype provided!")
 if(ncol(Y)<2)  stop ("Phenotype should have taxa name and one trait at least. Please correct phenotype file!")
 
 for (trait in 2: ncol(Y))  {
-print(paste("Processing trait: ",colnames(Y)[trait],sep=""))
+traitname=colnames(Y)[trait]
+print(paste("Processing trait: ",traitname,sep=""))
+if(!is.null(memo)) traitname=paste(memo,".",traitname,sep="")
 gapitMain <- GAPIT.Main(Y=Y[,c(1,trait)],G=G,GD=GD,GM=GM,KI=KI,Z=Z,CV=CV,CV.Inheritance=CV.Inheritance,GP=GP,GK=GK,SNP.P3D=SNP.P3D,kinship.algorithm=kinship.algorithm,
                       bin.from=bin.from,bin.to=bin.to,bin.by=bin.by,inclosure.from=inclosure.from,inclosure.to=inclosure.to,inclosure.by=inclosure.by,
-				              group.from=group.from,group.to=group.to,group.by=group.by,kinship.cluster=kinship.cluster,kinship.group=kinship.group,name.of.trait = colnames(Y)[trait],
+				              group.from=group.from,group.to=group.to,group.by=group.by,kinship.cluster=kinship.cluster,kinship.group=kinship.group,name.of.trait=traitname,
                         file.path=file.path,file.from=file.from, file.to=file.to, file.total=file.total, file.fragment = file.fragment, file.G=file.G,file.Ext.G=file.Ext.G,file.GD=file.GD, file.GM=file.GM, file.Ext.GD=file.Ext.GD,file.Ext.GM=file.Ext.GM, 
                         SNP.MAF= SNP.MAF,FDR.Rate = FDR.Rate,SNP.FDR=SNP.FDR,SNP.effect=SNP.effect,SNP.impute=SNP.impute,PCA.total=PCA.total,GAPIT.Version=GAPIT.Version,
                         GT=GT, SNP.fraction = SNP.fraction, seed = seed, BINS = BINS,SNP.test=SNP.test,DPP=DPP, SNP.permutation=SNP.permutation,

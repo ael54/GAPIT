@@ -858,7 +858,6 @@ rsquare=p3d$rsquare
       stderr=p3d$stderr
 effect.est=p3d$effect.est
 
-
 Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Extract p3d results")
 Memory=GAPIT.Memory(Memory=Memory,Infor="Extract p3d results")
   
@@ -872,7 +871,7 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="Extract p3d results")
   maf=myBread$GWAS[,5]*0+.5
   rsquare_base=rep(NA,length(ps))
   rsquare=rep(NA,length(ps))
-  
+
 Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Extract bread results")
 Memory=GAPIT.Memory(Memory=Memory,Infor="Extract bread results")
  
@@ -960,7 +959,7 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="MAF filtered")
   #Create PWIP, which is a table of SNP Names, Chromosome, bp Position, Raw P-values, FDR Adjusted P-values
   print("Calculating FDR..." )
   PWIP <- GAPIT.Perform.BH.FDR.Multiple.Correction.Procedure(PWI = PWI.Filtered, FDR.Rate = FDR.Rate, FDR.Procedure = "BH")
-
+  
 Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Multiple Correction")
 Memory=GAPIT.Memory(Memory=Memory,Infor="Multiple Correction")
 

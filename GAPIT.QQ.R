@@ -7,15 +7,17 @@ function(P.values, plot.type = "log_P_values", name.of.trait = "Trait",DPP=50000
 # Last update: May 9, 2011 
 ##############################################################################################
 
-
 # Sort the data by the raw P-values
 print("Sorting p values")
 print(paste("Number of P values: ",length(P.values)))
+#remove NAs and keep the ones between between 0 and 1
+P.values=P.values[!is.na(P.values)]
+P.values=P.values[P.values>0]
+P.values=P.values[P.values<=1]
+
 if(length(P.values[P.values>0])<1) return(NULL)
 N=length(P.values)
-
 DPP=round(DPP/4) #Reduce to 1/4 for QQ plot
-
 P.values <- P.values[order(P.values)]
   
 #Set up the p-value quantiles
@@ -27,7 +29,7 @@ if(plot.type == "log_P_values")
 {
     log.P.values <- -log10(P.values)
     log.Quantiles <- -log10(p_value_quantiles)
-	
+        	
     index=GAPIT.Pruning(log.P.values,DPP=DPP)
     log.P.values=log.P.values[index ]
     log.Quantiles=log.Quantiles[index]

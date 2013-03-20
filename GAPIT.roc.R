@@ -16,6 +16,11 @@ function(t=NULL,se=NULL,Vp=1,trait=""){
 #se=sqrt(abs(rnorm(n))  )
 #Vp=10
 
+#Remove NAs
+index=is.na(t)
+t=t[!index]
+se=se[!index]
+#print(head(cbind(t,se)))
 #Configration
 FDR=c(0,.01,.05,.1,.2,.3,.4,.5,.6,.7,.8,.9,1)
 coefficient=c(0,0.01,.02,.05,.1,.2,.3)
@@ -62,12 +67,12 @@ rownames(power)=FDR
 colnames(power)=paste("QTN=",coefficient,sep="")
 write.table(power,file=paste("GAPIT.",trait,".ROC.csv",sep=""),quote = TRUE, sep = ",", row.names = TRUE,col.names = NA)
 
-palette(rainbow(nc))
+palette(c("black","red","blue","brown", "orange","cyan", "green",rainbow(nc)))
 
 pdf(paste("GAPIT.", trait,".ROC.pdf" ,sep = ""), width = 8,height=8) 
 par(mar = c(5,5,5,5))
   
-plot(FDR,power[,1],type="o",pch=0,col=1,ylab="Power")
+plot(FDR,power[,1],type="o",lwd=2,col=1,ylab="Power")
 for(i in 2:nc){
 lines(power[,i]~FDR, lwd=2,type="o",pch=i,col=i)
 }

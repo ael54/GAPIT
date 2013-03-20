@@ -932,6 +932,8 @@ gc()
         if(is.null(K)) stats[i, j] <- beta[q1]/sqrt(iXX[q1, q1] *ves)
         effect.est[i, ] <- beta[q1]
         ps[i, ] <- 2 * pt(abs(stats[i, ]), dfs[i, ],lower.tail = FALSE)
+        if(is.na(ps[i,]))ps[i,]=1
+        #print(c(i,ps[i,],stats[i,],beta[q1],iXX[q1, q1]))
        } 
        if(Create.indicator){
        
@@ -1005,6 +1007,10 @@ if(!fullGD)
 
 Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="GWAS done for this Trait")
 Memory=GAPIT.Memory(Memory=Memory,Infor="GWAS done for this Trait")
+
+print("debug 1b@@@@@")
+print(length(ps))
+write.table(ps,"debug.csv",sep=",")
 
 
     return(list(ps = ps, REMLs = -2*REMLs, stats = stats, effect.est = effect.est, rsquare_base = rsquare_base, rsquare = rsquare, dfs = dfs, df = df, tvalue = tvalue, stderr = stderr,maf=maf,nobs = nobs,Timmer=Timmer,Memory=Memory,

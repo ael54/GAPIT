@@ -10,20 +10,24 @@ function(GI.MP = NULL, name.of.trait = "Trait",
 
 print("Manhattan ploting...")
 
+
 #do nothing if null input
 if(is.null(GI.MP)) return
 
 GI.MP=matrix(as.numeric(as.matrix(GI.MP) ) ,nrow(GI.MP),ncol(GI.MP))
 
-#Remove all SNPs that do not have a choromosome and bp position
+#Remove all SNPs that do not have a choromosome, bp position and p value(NA)
 GI.MP <- GI.MP[!is.na(GI.MP[,1]),]
 GI.MP <- GI.MP[!is.na(GI.MP[,2]),]
+GI.MP <- GI.MP[!is.na(GI.MP[,3]),]
 
-#Remove all SNPs that have P values above 0 (not na etc)
+#Remove all SNPs that have P values between 0 and 1 (not na etc)
 GI.MP <- GI.MP[GI.MP[,3]>0,]
+GI.MP <- GI.MP[GI.MP[,3]<=1,]
+
 numMarker=nrow(GI.MP)
 bonferroniCutOff=-log10(cutOff/numMarker)
-	
+
 #Replace P the -log10 of the P-values
 GI.MP[,3] <-  -log10(GI.MP[,3])
 y.lim <- ceiling(max(GI.MP[,3]))
@@ -45,8 +49,8 @@ print("Manhattan ploting Chromosomewise")
   	#print(paste("CHR: ",i, " #SNPs: ",length(subset),sep=""))
   	#print(dim(subset))
   	#print((subset))
+
   	y.lim <- ceiling(max(subset[,3]))  #set upper for each chr
-  	
   	if(length(subset)>3){
       x <- as.numeric(subset[,2])/10^(6)
       y <- as.numeric(subset[,3])
@@ -54,21 +58,18 @@ print("Manhattan ploting Chromosomewise")
       x <- as.numeric(subset[2])/10^(6)
       y <- as.numeric(subset[3])
     }
+
  	  #print(paste("befor prune: chr: ",i, "length: ",length(x),"max p",max(y), "min p",min(y), "max x",max(x), "Min x",min(x)))
-
-
-        
+       
   	#Prune most non important SNPs off the plots
     order=order(y,decreasing = TRUE)
     y=y[order]
     x=x[order]
-    
+
     index=GAPIT.Pruning(y,DPP=round(DPP/numCHR))
-      	
-  	x=x[index]
+   	x=x[index]
   	y=y[index]
 
-  	
  	  #print(paste("after prune: chr: ",i, "length: ",length(x),"max p",max(y), "min p",min(y), "max x",max(x), "Min x",min(x)))
  	  
     #color.vector <- subset(temp.par.data[,7], temp.par.data[,4] == i)
@@ -86,7 +87,6 @@ abline(h=bonferroniCutOff,col="forestgreen")
 if(plot.type == "Genomewise")
 {
 print("Manhattan ploting Genomewise")
-
 #Set corlos for chromosomes
 nchr=max(chm.to.analyze)
 ncycle=ceiling(nchr/band)
@@ -94,9 +94,8 @@ ncolor=band*ncycle
 palette(rainbow(ncolor+1))
 cycle1=seq(1,nchr,by= ncycle)
 thecolor=cycle1
-for(i in 2:ncycle){thecolor=c(thecolor,cycle1+(i-1))}
 
-  
+for(i in 2:ncycle){thecolor=c(thecolor,cycle1+(i-1))}
   GI.MP <- GI.MP[order(GI.MP[,2]),]
   GI.MP <- GI.MP[order(GI.MP[,1]),]
   color.vector <- rep(c("orangered","navyblue"),numCHR)
@@ -136,8 +135,8 @@ themin=min(y)
 wd=((y-themin+base)/(themax-themin+base))*size*ratio
 s=size-wd/ratio/2
 
-#print("Manhattan XY created")
-
+print("Manhattan XY created")
+  	
   pdf(paste("GAPIT.", name.of.trait,".Manhattan-Plot.Genomewise.pdf" ,sep = ""), width = 11,height=5)
   par(mar = c(5,6,5,1))
 
