@@ -39,16 +39,29 @@ binP[2:n,2]=binP[1:(n-1),1]
 binP[1,2]=0 #set the first
 binP[,3]= binP[,1]-binP[,2]
 
-
 #Se representives of bins
 ID.GP=binP[binP[,3]>0,]
 
 
 #Choose the most influencial bins as estimated QTNs
-ID.GP=ID.GP[order(as.numeric(as.vector(ID.GP[,5]))),]  #sort on P alue
-ID.GP=ID.GP[!is.na(ID.GP[,4]),4] #must have chr and bp information, keep SNP ID only
 
-if(!is.null(inclosure.size)) ID.GP=ID.GP[1:inclosure.size] #keep the top ones selected
+#Handler of single row
+if(is.null(dim(ID.GP))) ID.GP=matrix(ID.GP,1,length(ID.GP))
+
+ID.GP=ID.GP[order(as.numeric(as.vector(ID.GP[,5]))),]  #sort on P alue
+
+#Handler of single row (again after reshape)
+if(is.null(dim(ID.GP))) ID.GP=matrix(ID.GP,1,length(ID.GP))
+
+index=!is.na(ID.GP[,4])
+ID.GP=ID.GP[index,4] #must have chr and bp information, keep SNP ID only
+
+if(!is.null(inclosure.size)   ) {
+  if(!is.na(inclosure.size)){
+    avaiable=min(inclosure.size,length(ID.GP))
+    ID.GP=ID.GP[1:avaiable] #keep the top ones selected
+  }
+}
 
 #create index in GI
 theIndex=NULL
@@ -57,6 +70,8 @@ ID.GI=as.numeric(as.vector(GI[,3]))+as.numeric(as.vector(GI[,2]))*MaxBP
 theIndex=ID.GI %in% ID.GP
 }
 #print("Specification in process done")
+myList=list(index=theIndex,CB=ID.GP)
+#print("debug in specify on list")
 return (list(index=theIndex,CB=ID.GP))
 } #end of GAPIT.Specify
 

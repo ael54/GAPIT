@@ -1,12 +1,19 @@
 `GAPIT.get.LL` <-
-function(pheno,geno=NULL,snp.pool,X0=NULL){
+cmpfun(function(pheno,geno=NULL,snp.pool,X0=NULL){
 # evaluation of the maximum likelihood
 #Input: ys, xs, vg, delta, Z, X0, snp.pool
 #Output: LL
 #Authors: Qishan Wang, Feng Tian and Zhiwu Zhang
 #Last update: April 16, 2012
 ################################################################################
-
+print("GAPIT.get.LL started")
+print("dimension of pheno, snpool and X0")
+print(dim(pheno))
+print(length(pheno))
+print(dim(snp.pool))
+print(length(snp.pool))
+print(dim(X0))
+print(length(X0))
 y=pheno
 p=0
 
@@ -20,12 +27,24 @@ X=X0
 
 #########SVD of X
 K.X.svd= svd(snp.pool) 
+
 #####rivised 2012.4.15 by qishan wang
 d=K.X.svd$d
 d=d[d>1e-8]
 d=d^2
 U1=K.X.svd$u
 U1=U1[,1:length(d)] ##rivised 2012.4.15 by qishan wang
+
+#handler of single snp
+if(is.null(dim(U1))) U1=matrix(U1,ncol=1)
+
+print("debug U1 X")
+print(dim(U1))
+print(length(U1))
+print(dim(X))
+print(length(X))
+
+
 ###################
 n=nrow(U1)
 I= diag(1,nrow(U1))
@@ -186,4 +205,4 @@ sigma_e<-delta*sigma_a
 
 return(list(beta=beta, delta=delta, LL=LL, vg=sigma_a,ve=sigma_e))
 }
-
+)#end of cmpfun(

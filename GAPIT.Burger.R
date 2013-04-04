@@ -11,9 +11,40 @@ function(Y=NULL,CV=NULL,GK=NULL){
 #Last update: November 2, 2011
 ##############################################################################################
 
-#print("GAPIT.Burger in progress...")
+print("GAPIT.Burger in progress...")
+print("dimension of Y, CV and GK")
+print(dim(Y))
+print(length(Y))
+print(dim(CV))
+print(length(CV))
+print(dim(GK))
+print(length(GK))
 
-myFaSTREML=GAPIT.get.LL(pheno=matrix(Y[,-1],nrow(Y),1),geno=NULL,snp.pool=as.matrix(GK[,-1]),X0=as.matrix(cbind(matrix(1,nrow(CV),1),CV[,-1])))
+
+if(!is.null(CV)){
+  theCV=as.matrix(cbind(matrix(1,nrow(CV),1),CV[,-1]))
+}else{
+  theCV=matrix(1,nrow(Y),1)
+}
+
+#handler of single column GK
+n=nrow(GK)
+m=ncol(GK)
+if(m>2){
+theGK=as.matrix(GK[,-1])
+}else{
+theGK=matrix(GK[,-1],n,1)
+}
+
+print("debug dimension of Y, CV and GK")
+print(dim(Y))
+print(length(Y))
+print(dim(CV))
+print(length(CV))
+print(dim(GK))
+print(length(GK))
+
+myFaSTREML=GAPIT.get.LL(pheno=matrix(Y[,-1],nrow(Y),1),geno=NULL,snp.pool=theGK,X0=theCV   )
 
 REMLs=-2*myFaSTREML$LL  
 delta=myFaSTREML$delta

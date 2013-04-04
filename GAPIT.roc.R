@@ -31,8 +31,8 @@ nc=length(coefficient)
 power=matrix(NA,nf,nc)
 
 #Handler of matrix format
-if(length(t)==1)t=t[,1]
-if(length(se)==1)se=se[,1]
+if(!is.null(dim(t))) t=t[,1]
+if(!is.null(dim(se))) se=se[,1]
 
 n=length(t)
 
@@ -72,7 +72,7 @@ palette(c("black","red","blue","brown", "orange","cyan", "green",rainbow(nc)))
 pdf(paste("GAPIT.", trait,".ROC.pdf" ,sep = ""), width = 8,height=8) 
 par(mar = c(5,5,5,5))
   
-plot(FDR,power[,1],type="o",lwd=2,col=1,ylab="Power")
+plot(FDR,power[,1],type="o",lwd=2,col=1,xlab="Type I error",ylab="Power")
 for(i in 2:nc){
 lines(power[,i]~FDR, lwd=2,type="o",pch=i,col=i)
 }

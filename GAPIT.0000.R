@@ -9,7 +9,7 @@ function(){
 
 #Designed by Zhiwu Zhang
 #Writen by Alex Lipka, Feng Tian and Zhiwu Zhang
-GAPIT.Version="2.30, March 17, 2013 (Orientation)"
+GAPIT.Version="3.34, April 4, 2013 (Mist)"
 return(GAPIT.Version)
 }
 

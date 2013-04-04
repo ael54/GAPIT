@@ -9,7 +9,7 @@ function(){
 
 #Designed by Zhiwu Zhang
 #Writen by Alex Lipka, Feng Tian and Zhiwu Zhang
-GAPIT.Version="2.25, January 14, 2012 (Confidence interval for QQ plot)"
+GAPIT.Version="3.34, April 4, 2013 (Mist)"
 return(GAPIT.Version)
 }
 
@@ -212,9 +212,40 @@ function(Y=NULL,CV=NULL,GK=NULL){
 #Last update: November 2, 2011
 ##############################################################################################
 
-#print("GAPIT.Burger in progress...")
+print("GAPIT.Burger in progress...")
+print("dimension of Y, CV and GK")
+print(dim(Y))
+print(length(Y))
+print(dim(CV))
+print(length(CV))
+print(dim(GK))
+print(length(GK))
 
-myFaSTREML=GAPIT.get.LL(pheno=matrix(Y[,-1],nrow(Y),1),geno=NULL,snp.pool=as.matrix(GK[,-1]),X0=as.matrix(cbind(matrix(1,nrow(CV),1),CV[,-1])))
+
+if(!is.null(CV)){
+  theCV=as.matrix(cbind(matrix(1,nrow(CV),1),CV[,-1]))
+}else{
+  theCV=matrix(1,nrow(Y),1)
+}
+
+#handler of single column GK
+n=nrow(GK)
+m=ncol(GK)
+if(m>2){
+theGK=as.matrix(GK[,-1])
+}else{
+theGK=matrix(GK[,-1],n,1)
+}
+
+print("debug dimension of Y, CV and GK")
+print(dim(Y))
+print(length(Y))
+print(dim(CV))
+print(length(CV))
+print(dim(GK))
+print(length(GK))
+
+myFaSTREML=GAPIT.get.LL(pheno=matrix(Y[,-1],nrow(Y),1),geno=NULL,snp.pool=theGK,X0=theCV   )
 
 REMLs=-2*myFaSTREML$LL  
 delta=myFaSTREML$delta
@@ -1763,6 +1794,8 @@ gc()
         if(is.null(K)) stats[i, j] <- beta[q1]/sqrt(iXX[q1, q1] *ves)
         effect.est[i, ] <- beta[q1]
         ps[i, ] <- 2 * pt(abs(stats[i, ]), dfs[i, ],lower.tail = FALSE)
+        if(is.na(ps[i,]))ps[i,]=1
+        #print(c(i,ps[i,],stats[i,],beta[q1],iXX[q1, q1]))
        } 
        if(Create.indicator){
        
@@ -1836,6 +1869,10 @@ if(!fullGD)
 
 Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="GWAS done for this Trait")
 Memory=GAPIT.Memory(Memory=Memory,Infor="GWAS done for this Trait")
+
+print("debug 1b@@@@@")
+print(length(ps))
+write.table(ps,"debug.csv",sep=",")
 
 
     return(list(ps = ps, REMLs = -2*REMLs, stats = stats, effect.est = effect.est, rsquare_base = rsquare_base, rsquare = rsquare, dfs = dfs, df = df, tvalue = tvalue, stderr = stderr,maf=maf,nobs = nobs,Timmer=Timmer,Memory=Memory,
@@ -2527,14 +2564,21 @@ return (list(G=G,GD=GD,GI=GI,GT=GT,hasGenotype=hasGenotype, genoFormat=genoForma
 }
 
 `GAPIT.get.LL` <-
-function(pheno,geno=NULL,snp.pool,X0=NULL){
+cmpfun(function(pheno,geno=NULL,snp.pool,X0=NULL){
 # evaluation of the maximum likelihood
 #Input: ys, xs, vg, delta, Z, X0, snp.pool
 #Output: LL
 #Authors: Qishan Wang, Feng Tian and Zhiwu Zhang
 #Last update: April 16, 2012
 ################################################################################
-
+print("GAPIT.get.LL started")
+print("dimension of pheno, snpool and X0")
+print(dim(pheno))
+print(length(pheno))
+print(dim(snp.pool))
+print(length(snp.pool))
+print(dim(X0))
+print(length(X0))
 y=pheno
 p=0
 
@@ -2548,12 +2592,24 @@ X=X0
 
 #########SVD of X
 K.X.svd= svd(snp.pool) 
+
 #####rivised 2012.4.15 by qishan wang
 d=K.X.svd$d
 d=d[d>1e-8]
 d=d^2
 U1=K.X.svd$u
 U1=U1[,1:length(d)] ##rivised 2012.4.15 by qishan wang
+
+#handler of single snp
+if(is.null(dim(U1))) U1=matrix(U1,ncol=1)
+
+print("debug U1 X")
+print(dim(U1))
+print(length(U1))
+print(dim(X))
+print(length(X))
+
+
 ###################
 n=nrow(U1)
 I= diag(1,nrow(U1))
@@ -2714,7 +2770,7 @@ sigma_e<-delta*sigma_a
 
 return(list(beta=beta, delta=delta, LL=LL, vg=sigma_a,ve=sigma_e))
 }
-
+)#end of cmpfun(
 `GAPIT.GS` <-
 function(KW,KO,KWO,GAU,UW){
 #Object: to derive BLUP for the individuals without phenotype
@@ -3995,7 +4051,6 @@ rsquare=p3d$rsquare
       stderr=p3d$stderr
 effect.est=p3d$effect.est
 
-
 Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Extract p3d results")
 Memory=GAPIT.Memory(Memory=Memory,Infor="Extract p3d results")
   
@@ -4009,7 +4064,7 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="Extract p3d results")
   maf=myBread$GWAS[,5]*0+.5
   rsquare_base=rep(NA,length(ps))
   rsquare=rep(NA,length(ps))
-  
+
 Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Extract bread results")
 Memory=GAPIT.Memory(Memory=Memory,Infor="Extract bread results")
  
@@ -4097,7 +4152,7 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="MAF filtered")
   #Create PWIP, which is a table of SNP Names, Chromosome, bp Position, Raw P-values, FDR Adjusted P-values
   print("Calculating FDR..." )
   PWIP <- GAPIT.Perform.BH.FDR.Multiple.Correction.Procedure(PWI = PWI.Filtered, FDR.Rate = FDR.Rate, FDR.Procedure = "BH")
-
+  
 Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Multiple Correction")
 Memory=GAPIT.Memory(Memory=Memory,Infor="Multiple Correction")
 
@@ -4186,24 +4241,43 @@ function(GI.MP = NULL, name.of.trait = "Trait",
 
 print("Manhattan ploting...")
 
+
 #do nothing if null input
 if(is.null(GI.MP)) return
+print("Dimension of GI.MP")
+print(dim(GI.MP))
+print(head(GI.MP))
+print(tail(GI.MP))
 
 GI.MP=matrix(as.numeric(as.matrix(GI.MP) ) ,nrow(GI.MP),ncol(GI.MP))
 
-#Remove all SNPs that do not have a choromosome and bp position
+#Remove all SNPs that do not have a choromosome, bp position and p value(NA)
 GI.MP <- GI.MP[!is.na(GI.MP[,1]),]
 GI.MP <- GI.MP[!is.na(GI.MP[,2]),]
+GI.MP <- GI.MP[!is.na(GI.MP[,3]),]
 
-#Remove all SNPs that have P values above 0 (not na etc)
+#Remove all SNPs that have P values between 0 and 1 (not na etc)
 GI.MP <- GI.MP[GI.MP[,3]>0,]
+GI.MP <- GI.MP[GI.MP[,3]<=1,]
+
+#Remove chr 0 and 99
+GI.MP <- GI.MP[GI.MP[,1]!=0,]
+#GI.MP <- GI.MP[GI.MP[,1]!=99,]
+
+print("Dimension of GI.MP after QC")
+print(dim(GI.MP))
+
 numMarker=nrow(GI.MP)
 bonferroniCutOff=-log10(cutOff/numMarker)
-	
+
 #Replace P the -log10 of the P-values
 GI.MP[,3] <-  -log10(GI.MP[,3])
 y.lim <- ceiling(max(GI.MP[,3]))
 chm.to.analyze <- unique(GI.MP[,1]) 
+
+print("name of chromosomes:")
+print(chm.to.analyze) 
+
 chm.to.analyze=chm.to.analyze[order(chm.to.analyze)]
 numCHR= length(chm.to.analyze)
 
@@ -4221,8 +4295,8 @@ print("Manhattan ploting Chromosomewise")
   	#print(paste("CHR: ",i, " #SNPs: ",length(subset),sep=""))
   	#print(dim(subset))
   	#print((subset))
+
   	y.lim <- ceiling(max(subset[,3]))  #set upper for each chr
-  	
   	if(length(subset)>3){
       x <- as.numeric(subset[,2])/10^(6)
       y <- as.numeric(subset[,3])
@@ -4230,21 +4304,18 @@ print("Manhattan ploting Chromosomewise")
       x <- as.numeric(subset[2])/10^(6)
       y <- as.numeric(subset[3])
     }
+
  	  #print(paste("befor prune: chr: ",i, "length: ",length(x),"max p",max(y), "min p",min(y), "max x",max(x), "Min x",min(x)))
-
-
-        
+       
   	#Prune most non important SNPs off the plots
     order=order(y,decreasing = TRUE)
     y=y[order]
     x=x[order]
-    
+
     index=GAPIT.Pruning(y,DPP=round(DPP/numCHR))
-      	
-  	x=x[index]
+   	x=x[index]
   	y=y[index]
 
-  	
  	  #print(paste("after prune: chr: ",i, "length: ",length(x),"max p",max(y), "min p",min(y), "max x",max(x), "Min x",min(x)))
  	  
     #color.vector <- subset(temp.par.data[,7], temp.par.data[,4] == i)
@@ -4262,27 +4333,26 @@ abline(h=bonferroniCutOff,col="forestgreen")
 if(plot.type == "Genomewise")
 {
 print("Manhattan ploting Genomewise")
-
 #Set corlos for chromosomes
-nchr=max(chm.to.analyze)
+#nchr=max(chm.to.analyze)
+nchr=length(chm.to.analyze)
 ncycle=ceiling(nchr/band)
 ncolor=band*ncycle
 palette(rainbow(ncolor+1))
 cycle1=seq(1,nchr,by= ncycle)
 thecolor=cycle1
-for(i in 2:ncycle){thecolor=c(thecolor,cycle1+(i-1))}
 
-  
+for(i in 2:ncycle){thecolor=c(thecolor,cycle1+(i-1))}
   GI.MP <- GI.MP[order(GI.MP[,2]),]
   GI.MP <- GI.MP[order(GI.MP[,1]),]
   color.vector <- rep(c("orangered","navyblue"),numCHR)
   ticks=NULL
   lastbase=0
 
-#print("Manhattan data sorted")
-#print(chm.to.analyze) 
+print("Manhattan data sorted")
+print(chm.to.analyze) 
 
-  #change base position to accumulatives
+  #change base position to accumulatives (ticks)
   for (i in chm.to.analyze)
   {
     index=(GI.MP[,1]==i)
@@ -4291,13 +4361,17 @@ for(i in 2:ncycle){thecolor=c(thecolor,cycle1+(i-1))}
     lastbase=max(GI.MP[index,2])
   }
 
-  #print("Manhattan chr processed")
+  print("Manhattan chr processed")
+  print(length(index))
+  print(length(ticks))
+  print((ticks))
+  print((lastbase))
 
     x0 <- as.numeric(GI.MP[,2])
     y0 <- as.numeric(GI.MP[,3])
     z0 <- as.numeric(GI.MP[,1])
 	position=order(y0,decreasing = TRUE)
-    index0=GAPIT.Pruning(y0[position],DPP=DPP)
+  index0=GAPIT.Pruning(y0[position],DPP=DPP)
 	index=position[index0]
 	x=x0[index]
 	y=y0[index]
@@ -4312,8 +4386,8 @@ themin=min(y)
 wd=((y-themin+base)/(themax-themin+base))*size*ratio
 s=size-wd/ratio/2
 
-#print("Manhattan XY created")
-
+print("Manhattan XY created")
+  	
   pdf(paste("GAPIT.", name.of.trait,".Manhattan-Plot.Genomewise.pdf" ,sep = ""), width = 11,height=5)
   par(mar = c(5,6,5,1))
 
@@ -4806,15 +4880,17 @@ function(P.values, plot.type = "log_P_values", name.of.trait = "Trait",DPP=50000
 # Last update: May 9, 2011 
 ##############################################################################################
 
-
 # Sort the data by the raw P-values
 print("Sorting p values")
 print(paste("Number of P values: ",length(P.values)))
+#remove NAs and keep the ones between between 0 and 1
+P.values=P.values[!is.na(P.values)]
+P.values=P.values[P.values>0]
+P.values=P.values[P.values<=1]
+
 if(length(P.values[P.values>0])<1) return(NULL)
 N=length(P.values)
-
 DPP=round(DPP/4) #Reduce to 1/4 for QQ plot
-
 P.values <- P.values[order(P.values)]
   
 #Set up the p-value quantiles
@@ -4826,7 +4902,7 @@ if(plot.type == "log_P_values")
 {
     log.P.values <- -log10(P.values)
     log.Quantiles <- -log10(p_value_quantiles)
-	
+        	
     index=GAPIT.Pruning(log.P.values,DPP=DPP)
     log.P.values=log.P.values[index ]
     log.Quantiles=log.Quantiles[index]
@@ -4904,7 +4980,9 @@ function(Y=NULL,G=NULL,GD=NULL,GM=NULL,KI=NULL,Z=NULL,CV=NULL,CV.Inheritance=NUL
                 sangwich.top=NULL,sangwich.bottom=NULL,QC=TRUE,GTindex=NULL,LD=0.01,
                 file.output=TRUE,cutOff=0.01, Model.selection = FALSE,output.numerical = FALSE,
                 output.hapmap = FALSE, Create.indicator = FALSE,
-				QTN=NULL, QTN.round=1,QTN.limit=0, QTN.update=TRUE, QTN.method="Penalty", Major.allele.zero = FALSE){
+				QTN=NULL, QTN.round=1,QTN.limit=0, QTN.update=TRUE, QTN.method="Penalty", Major.allele.zero = FALSE,
+        method.GLM="fast.lm",method.sub="penalty",method.bin="static",bin.size=c(1000000),bin.selection=c(10,20,50,100,200,500,1000),
+        memo="",Prior=NULL,ncpus=1,maxLoop=3,threshold.output=.01){
 #Object: To perform GWAS and GPS (Genomic Prediction/Selection)
 #Designed by Zhiwu Zhang
 #Writen by Alex Lipka, Feng Tian and Zhiwu Zhang
@@ -4920,6 +4998,12 @@ Memory=GAPIT.Memory(Infor="GAPIT")
 #Genotype processing and calculation Kin and PC
 #First call to genotype to setup genotype data
 
+#BUS algorithm
+if(kinship.algorithm=="FARM-CPU") return (GAPIT.BUS(Y=Y,GDP=GD,GM=GM,CV=CV,
+  method.GLM=method.GLM,method.sub=method.sub,method.bin=method.bin,
+  bin.size=bin.size,bin.selection=bin.selection,file.output=file.output,
+  cutOff=cutOff,DPP=DPP,memo=memo,Prior=Prior,ncpus=ncpus,maxLoop=maxLoop,
+  kinship.algorithm=kinship.algorithm,GP=GP,threshold.output=threshold.output))
 
 myGenotype<-GAPIT.Genotype(G=G,GD=GD,GM=GM,KI=KI,kinship.algorithm=kinship.algorithm,PCA.total=PCA.total,SNP.fraction=SNP.fraction,SNP.test=SNP.test,
                 file.path=file.path,file.from=file.from, file.to=file.to, file.total=file.total, file.fragment = file.fragment, file.G=file.G, 
@@ -4969,10 +5053,12 @@ print("Phenotype provided!")
 if(ncol(Y)<2)  stop ("Phenotype should have taxa name and one trait at least. Please correct phenotype file!")
 
 for (trait in 2: ncol(Y))  {
-print(paste("Processing trait: ",colnames(Y)[trait],sep=""))
+traitname=colnames(Y)[trait]
+print(paste("Processing trait: ",traitname,sep=""))
+if(!is.null(memo)) traitname=paste(memo,".",traitname,sep="")
 gapitMain <- GAPIT.Main(Y=Y[,c(1,trait)],G=G,GD=GD,GM=GM,KI=KI,Z=Z,CV=CV,CV.Inheritance=CV.Inheritance,GP=GP,GK=GK,SNP.P3D=SNP.P3D,kinship.algorithm=kinship.algorithm,
                       bin.from=bin.from,bin.to=bin.to,bin.by=bin.by,inclosure.from=inclosure.from,inclosure.to=inclosure.to,inclosure.by=inclosure.by,
-				              group.from=group.from,group.to=group.to,group.by=group.by,kinship.cluster=kinship.cluster,kinship.group=kinship.group,name.of.trait = colnames(Y)[trait],
+				              group.from=group.from,group.to=group.to,group.by=group.by,kinship.cluster=kinship.cluster,kinship.group=kinship.group,name.of.trait=traitname,
                         file.path=file.path,file.from=file.from, file.to=file.to, file.total=file.total, file.fragment = file.fragment, file.G=file.G,file.Ext.G=file.Ext.G,file.GD=file.GD, file.GM=file.GM, file.Ext.GD=file.Ext.GD,file.Ext.GM=file.Ext.GM, 
                         SNP.MAF= SNP.MAF,FDR.Rate = FDR.Rate,SNP.FDR=SNP.FDR,SNP.effect=SNP.effect,SNP.impute=SNP.impute,PCA.total=PCA.total,GAPIT.Version=GAPIT.Version,
                         GT=GT, SNP.fraction = SNP.fraction, seed = seed, BINS = BINS,SNP.test=SNP.test,DPP=DPP, SNP.permutation=SNP.permutation,
@@ -5052,6 +5138,11 @@ function(t=NULL,se=NULL,Vp=1,trait=""){
 #se=sqrt(abs(rnorm(n))  )
 #Vp=10
 
+#Remove NAs
+index=is.na(t)
+t=t[!index]
+se=se[!index]
+#print(head(cbind(t,se)))
 #Configration
 FDR=c(0,.01,.05,.1,.2,.3,.4,.5,.6,.7,.8,.9,1)
 coefficient=c(0,0.01,.02,.05,.1,.2,.3)
@@ -5062,8 +5153,8 @@ nc=length(coefficient)
 power=matrix(NA,nf,nc)
 
 #Handler of matrix format
-if(length(t)==1)t=t[,1]
-if(length(se)==1)se=se[,1]
+if(!is.null(dim(t))) t=t[,1]
+if(!is.null(dim(se))) se=se[,1]
 
 n=length(t)
 
@@ -5098,12 +5189,12 @@ rownames(power)=FDR
 colnames(power)=paste("QTN=",coefficient,sep="")
 write.table(power,file=paste("GAPIT.",trait,".ROC.csv",sep=""),quote = TRUE, sep = ",", row.names = TRUE,col.names = NA)
 
-palette(rainbow(nc))
+palette(c("black","red","blue","brown", "orange","cyan", "green",rainbow(nc)))
 
 pdf(paste("GAPIT.", trait,".ROC.pdf" ,sep = ""), width = 8,height=8) 
 par(mar = c(5,5,5,5))
   
-plot(FDR,power[,1],type="o",pch=0,col=1,ylab="Power")
+plot(FDR,power[,1],type="o",lwd=2,col=1,xlab="Type I error",ylab="Power")
 for(i in 2:nc){
 lines(power[,i]~FDR, lwd=2,type="o",pch=i,col=i)
 }
@@ -5154,16 +5245,29 @@ binP[2:n,2]=binP[1:(n-1),1]
 binP[1,2]=0 #set the first
 binP[,3]= binP[,1]-binP[,2]
 
-
 #Se representives of bins
 ID.GP=binP[binP[,3]>0,]
 
 
 #Choose the most influencial bins as estimated QTNs
-ID.GP=ID.GP[order(as.numeric(as.vector(ID.GP[,5]))),]  #sort on P alue
-ID.GP=ID.GP[!is.na(ID.GP[,4]),4] #must have chr and bp information, keep SNP ID only
 
-if(!is.null(inclosure.size)) ID.GP=ID.GP[1:inclosure.size] #keep the top ones selected
+#Handler of single row
+if(is.null(dim(ID.GP))) ID.GP=matrix(ID.GP,1,length(ID.GP))
+
+ID.GP=ID.GP[order(as.numeric(as.vector(ID.GP[,5]))),]  #sort on P alue
+
+#Handler of single row (again after reshape)
+if(is.null(dim(ID.GP))) ID.GP=matrix(ID.GP,1,length(ID.GP))
+
+index=!is.na(ID.GP[,4])
+ID.GP=ID.GP[index,4] #must have chr and bp information, keep SNP ID only
+
+if(!is.null(inclosure.size)   ) {
+  if(!is.na(inclosure.size)){
+    avaiable=min(inclosure.size,length(ID.GP))
+    ID.GP=ID.GP[1:avaiable] #keep the top ones selected
+  }
+}
 
 #create index in GI
 theIndex=NULL
@@ -5172,6 +5276,8 @@ ID.GI=as.numeric(as.vector(GI[,3]))+as.numeric(as.vector(GI[,2]))*MaxBP
 theIndex=ID.GI %in% ID.GP
 }
 #print("Specification in process done")
+myList=list(index=theIndex,CB=ID.GP)
+#print("debug in specify on list")
 return (list(index=theIndex,CB=ID.GP))
 } #end of GAPIT.Specify
 

@@ -14,7 +14,7 @@ function(Y=NULL,G=NULL,GD=NULL,GM=NULL,KI=NULL,Z=NULL,CV=NULL,CV.Inheritance=NUL
                 output.hapmap = FALSE, Create.indicator = FALSE,
 				QTN=NULL, QTN.round=1,QTN.limit=0, QTN.update=TRUE, QTN.method="Penalty", Major.allele.zero = FALSE,
         method.GLM="fast.lm",method.sub="penalty",method.bin="static",bin.size=c(1000000),bin.selection=c(10,20,50,100,200,500,1000),
-        memo="",Prior=NULL,ncpus=1,orientation="col"){
+        memo="",Prior=NULL,ncpus=1,maxLoop=3,threshold.output=.01){
 #Object: To perform GWAS and GPS (Genomic Prediction/Selection)
 #Designed by Zhiwu Zhang
 #Writen by Alex Lipka, Feng Tian and Zhiwu Zhang
@@ -31,14 +31,11 @@ Memory=GAPIT.Memory(Infor="GAPIT")
 #First call to genotype to setup genotype data
 
 #BUS algorithm
-if(kinship.algorithm=="BUS") return (GAPIT.BUS(Y=Y,GDP=GD,GM=GM,CV=CV,
+if(kinship.algorithm=="FARM-CPU") return (GAPIT.BUS(Y=Y,GDP=GD,GM=GM,CV=CV,
   method.GLM=method.GLM,method.sub=method.sub,method.bin=method.bin,
   bin.size=bin.size,bin.selection=bin.selection,file.output=file.output,
-  cutOff=cutOff,DPP=DPP,memo=memo,Prior=Prior,ncpus=ncpus,orientation=orientation))
-if(kinship.algorithm=="NONE")return (GAPIT.BUS(Y=Y,GDP=GD,GM=GM,CV=CV,
-  method.GLM=method.GLM,method.bin="NONE",file.output=file.output,
-  cutOff=cutOff,DPP=DPP,memo=memo,ncpus=ncpus,orientation=orientation))
-
+  cutOff=cutOff,DPP=DPP,memo=memo,Prior=Prior,ncpus=ncpus,maxLoop=maxLoop,
+  kinship.algorithm=kinship.algorithm,GP=GP,threshold.output=threshold.output))
 
 myGenotype<-GAPIT.Genotype(G=G,GD=GD,GM=GM,KI=KI,kinship.algorithm=kinship.algorithm,PCA.total=PCA.total,SNP.fraction=SNP.fraction,SNP.test=SNP.test,
                 file.path=file.path,file.from=file.from, file.to=file.to, file.total=file.total, file.fragment = file.fragment, file.G=file.G, 

@@ -13,6 +13,10 @@ print("Manhattan ploting...")
 
 #do nothing if null input
 if(is.null(GI.MP)) return
+print("Dimension of GI.MP")
+print(dim(GI.MP))
+print(head(GI.MP))
+print(tail(GI.MP))
 
 GI.MP=matrix(as.numeric(as.matrix(GI.MP) ) ,nrow(GI.MP),ncol(GI.MP))
 
@@ -25,6 +29,13 @@ GI.MP <- GI.MP[!is.na(GI.MP[,3]),]
 GI.MP <- GI.MP[GI.MP[,3]>0,]
 GI.MP <- GI.MP[GI.MP[,3]<=1,]
 
+#Remove chr 0 and 99
+GI.MP <- GI.MP[GI.MP[,1]!=0,]
+#GI.MP <- GI.MP[GI.MP[,1]!=99,]
+
+print("Dimension of GI.MP after QC")
+print(dim(GI.MP))
+
 numMarker=nrow(GI.MP)
 bonferroniCutOff=-log10(cutOff/numMarker)
 
@@ -32,6 +43,10 @@ bonferroniCutOff=-log10(cutOff/numMarker)
 GI.MP[,3] <-  -log10(GI.MP[,3])
 y.lim <- ceiling(max(GI.MP[,3]))
 chm.to.analyze <- unique(GI.MP[,1]) 
+
+print("name of chromosomes:")
+print(chm.to.analyze) 
+
 chm.to.analyze=chm.to.analyze[order(chm.to.analyze)]
 numCHR= length(chm.to.analyze)
 
@@ -88,7 +103,8 @@ if(plot.type == "Genomewise")
 {
 print("Manhattan ploting Genomewise")
 #Set corlos for chromosomes
-nchr=max(chm.to.analyze)
+#nchr=max(chm.to.analyze)
+nchr=length(chm.to.analyze)
 ncycle=ceiling(nchr/band)
 ncolor=band*ncycle
 palette(rainbow(ncolor+1))
@@ -102,10 +118,10 @@ for(i in 2:ncycle){thecolor=c(thecolor,cycle1+(i-1))}
   ticks=NULL
   lastbase=0
 
-#print("Manhattan data sorted")
-#print(chm.to.analyze) 
+print("Manhattan data sorted")
+print(chm.to.analyze) 
 
-  #change base position to accumulatives
+  #change base position to accumulatives (ticks)
   for (i in chm.to.analyze)
   {
     index=(GI.MP[,1]==i)
@@ -114,13 +130,17 @@ for(i in 2:ncycle){thecolor=c(thecolor,cycle1+(i-1))}
     lastbase=max(GI.MP[index,2])
   }
 
-  #print("Manhattan chr processed")
+  print("Manhattan chr processed")
+  print(length(index))
+  print(length(ticks))
+  print((ticks))
+  print((lastbase))
 
     x0 <- as.numeric(GI.MP[,2])
     y0 <- as.numeric(GI.MP[,3])
     z0 <- as.numeric(GI.MP[,1])
 	position=order(y0,decreasing = TRUE)
-    index0=GAPIT.Pruning(y0[position],DPP=DPP)
+  index0=GAPIT.Pruning(y0[position],DPP=DPP)
 	index=position[index0]
 	x=x0[index]
 	y=y0[index]
