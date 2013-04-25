@@ -256,7 +256,7 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="eig.L removed")
 file.stop=file.to
 if(optOnly) file.stop=file.from
 if(fullGD)  file.stop=file.from
-if(!fullGD & !optOnly) print("Screening SNPs from file...")
+if(!fullGD & !optOnly) {print("Screening SNPs from file...")}
 
 #Add loop for genotype data files
 for (file in file.from:file.stop)
@@ -402,7 +402,7 @@ for (i in loopStart:mloop){
 #--------------------------------------------------------------------------------------------------------------------<
     normalCase=TRUE
 
-    if((i >0)&(floor(i/1000)==i/1000)) print(paste("Genotype file: ", file,", SNP: ",i," ",sep=""))
+    if((i >0)&(floor(i/1000)==i/1000)) {print(paste("Genotype file: ", file,", SNP: ",i," ",sep=""))}
     # To extract current snp. It save computation for next one in case they are identical
     if(i ==0&file==file.from&frag==1){
       #For the model without fitting SNP
@@ -588,8 +588,8 @@ for (i in loopStart:mloop){
         if(!Create.indicator) X <- cbind(X0[vids, , drop = FALSE], xs[vids,i])
         if(Create.indicator){
           X <- cbind(X0[vids, , drop = FALSE], xv)
-          #if(i == 1) print("the head of X for running GWAS is")
-          #if(i == 1) print(head(X))
+          #if(i == 1) {print("the head of X for running GWAS is")}
+          #if(i == 1) {print(head(X))}
         }       
         
       } 
@@ -1008,9 +1008,9 @@ if(!fullGD)
 Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="GWAS done for this Trait")
 Memory=GAPIT.Memory(Memory=Memory,Infor="GWAS done for this Trait")
 
-print("debug 1b@@@@@")
-print(length(ps))
-write.table(ps,"debug.csv",sep=",")
+#print("debug 1b@@@@@")
+#print(length(ps))
+#write.table(ps,"debug.csv",sep=",")
 
 
     return(list(ps = ps, REMLs = -2*REMLs, stats = stats, effect.est = effect.est, rsquare_base = rsquare_base, rsquare = rsquare, dfs = dfs, df = df, tvalue = tvalue, stderr = stderr,maf=maf,nobs = nobs,Timmer=Timmer,Memory=Memory,

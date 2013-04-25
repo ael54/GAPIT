@@ -6,14 +6,14 @@ cmpfun(function(pheno,geno=NULL,snp.pool,X0=NULL){
 #Authors: Qishan Wang, Feng Tian and Zhiwu Zhang
 #Last update: April 16, 2012
 ################################################################################
-print("GAPIT.get.LL started")
-print("dimension of pheno, snpool and X0")
-print(dim(pheno))
-print(length(pheno))
-print(dim(snp.pool))
-print(length(snp.pool))
-print(dim(X0))
-print(length(X0))
+#print("GAPIT.get.LL started")
+#print("dimension of pheno, snpool and X0")
+#print(dim(pheno))
+#print(length(pheno))
+#print(dim(snp.pool))
+#print(length(snp.pool))
+#print(dim(X0))
+#print(length(X0))
 y=pheno
 p=0
 
@@ -38,11 +38,11 @@ U1=U1[,1:length(d)] ##rivised 2012.4.15 by qishan wang
 #handler of single snp
 if(is.null(dim(U1))) U1=matrix(U1,ncol=1)
 
-print("debug U1 X")
-print(dim(U1))
-print(length(U1))
-print(dim(X))
-print(length(X))
+#print("debug U1 X")
+#print(dim(U1))
+#print(length(U1))
+#print(dim(X))
+#print(length(X))
 
 
 ###################

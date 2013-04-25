@@ -11,14 +11,14 @@ function(Y=NULL,CV=NULL,GK=NULL){
 #Last update: November 2, 2011
 ##############################################################################################
 
-print("GAPIT.Burger in progress...")
-print("dimension of Y, CV and GK")
-print(dim(Y))
-print(length(Y))
-print(dim(CV))
-print(length(CV))
-print(dim(GK))
-print(length(GK))
+#print("GAPIT.Burger in progress...")
+#print("dimension of Y, CV and GK")
+#print(dim(Y))
+#print(length(Y))
+#print(dim(CV))
+#print(length(CV))
+#print(dim(GK))
+#print(length(GK))
 
 
 if(!is.null(CV)){
@@ -36,13 +36,13 @@ theGK=as.matrix(GK[,-1])
 theGK=matrix(GK[,-1],n,1)
 }
 
-print("debug dimension of Y, CV and GK")
-print(dim(Y))
-print(length(Y))
-print(dim(CV))
-print(length(CV))
-print(dim(GK))
-print(length(GK))
+#print("debug dimension of Y, CV and GK")
+#print(dim(Y))
+#print(length(Y))
+#print(dim(CV))
+#print(length(CV))
+#print(dim(GK))
+#print(length(GK))
 
 myFaSTREML=GAPIT.get.LL(pheno=matrix(Y[,-1],nrow(Y),1),geno=NULL,snp.pool=theGK,X0=theCV   )
 

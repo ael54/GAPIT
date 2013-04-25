@@ -13,8 +13,10 @@ function(Y=NULL,G=NULL,GD=NULL,GM=NULL,KI=NULL,Z=NULL,CV=NULL,CV.Inheritance=NUL
                 file.output=TRUE,cutOff=0.01, Model.selection = FALSE,output.numerical = FALSE,
                 output.hapmap = FALSE, Create.indicator = FALSE,
 				QTN=NULL, QTN.round=1,QTN.limit=0, QTN.update=TRUE, QTN.method="Penalty", Major.allele.zero = FALSE,
-        method.GLM="fast.lm",method.sub="penalty",method.bin="static",bin.size=c(1000000),bin.selection=c(10,20,50,100,200,500,1000),
-        memo="",Prior=NULL,ncpus=1,maxLoop=3,threshold.output=.01){
+        method.GLM="fast.lm",method.sub="reward",method.sub.final="reward",method.bin="static",bin.size=c(1000000),bin.selection=c(10,20,50,100,200,500,1000),
+        memo="",Prior=NULL,ncpus=1,maxLoop=3,threshold.output=.01,
+        WS=c(1e0,1e3,1e4,1e5,1e6,1e7),alpha=c(.01,.05,.1,.2,.3,.4,.5,.6,.7,.8,.9,1),maxOut=100,QTN.position=NULL,
+        converge=1,iteration.output=FALSE,acceleration=0){
 #Object: To perform GWAS and GPS (Genomic Prediction/Selection)
 #Designed by Zhiwu Zhang
 #Writen by Alex Lipka, Feng Tian and Zhiwu Zhang
@@ -32,10 +34,12 @@ Memory=GAPIT.Memory(Infor="GAPIT")
 
 #BUS algorithm
 if(kinship.algorithm=="FARM-CPU") return (GAPIT.BUS(Y=Y,GDP=GD,GM=GM,CV=CV,
-  method.GLM=method.GLM,method.sub=method.sub,method.bin=method.bin,
+  method.GLM=method.GLM,method.sub=method.sub,method.sub.final=method.sub.final,method.bin=method.bin,
   bin.size=bin.size,bin.selection=bin.selection,file.output=file.output,
   cutOff=cutOff,DPP=DPP,memo=memo,Prior=Prior,ncpus=ncpus,maxLoop=maxLoop,
-  kinship.algorithm=kinship.algorithm,GP=GP,threshold.output=threshold.output))
+  kinship.algorithm=kinship.algorithm,GP=GP,threshold.output=threshold.output,
+  WS=WS,alpha=alpha,maxOut=maxOut,QTN.position=QTN.position,converge=converge,
+  iteration.output=iteration.output,acceleration=acceleration))
 
 myGenotype<-GAPIT.Genotype(G=G,GD=GD,GM=GM,KI=KI,kinship.algorithm=kinship.algorithm,PCA.total=PCA.total,SNP.fraction=SNP.fraction,SNP.test=SNP.test,
                 file.path=file.path,file.from=file.from, file.to=file.to, file.total=file.total, file.fragment = file.fragment, file.G=file.G, 
@@ -98,7 +102,8 @@ gapitMain <- GAPIT.Main(Y=Y[,c(1,trait)],G=G,GD=GD,GM=GM,KI=KI,Z=Z,CV=CV,CV.Inhe
                         genoFormat=genoFormat,hasGenotype=hasGenotype,byFile=byFile,fullGD=fullGD,PC=PC,GI=GI,Timmer = Timmer, Memory = Memory,
                         sangwich.top=sangwich.top,sangwich.bottom=sangwich.bottom,QC=QC,GTindex=GTindex,LD=LD,file.output=file.output,cutOff=cutOff, 
                         Model.selection = Model.selection, Create.indicator = Create.indicator,
-						QTN=QTN, QTN.round=QTN.round,QTN.limit=QTN.limit, QTN.update=QTN.update, QTN.method=QTN.method, Major.allele.zero=Major.allele.zero)  
+						            QTN=QTN, QTN.round=QTN.round,QTN.limit=QTN.limit, QTN.update=QTN.update, QTN.method=QTN.method, Major.allele.zero=Major.allele.zero,
+                        QTN.position=QTN.position)  
 }# end of loop on trait
 
 if(ncol(Y>2) &file.output)
@@ -114,10 +119,18 @@ write.table(Memory, file, quote = FALSE, sep = ",", row.names = FALSE,col.names 
 }
 
 if(ncol(Y)==2) {
+
+#Evaluate Power vs FDR and type I error
+myPower=GAPIT.Power(WS=WS, alpha=alpha, maxOut=maxOut,seqQTN=QTN.position,GM=GM,GWAS=gapitMain$GWAS)
+
+
 h2= as.matrix(as.numeric(as.vector(gapitMain$Compression[,5]))/(as.numeric(as.vector(gapitMain$Compression[,5]))+as.numeric(as.vector(gapitMain$Compression[,6]))),length(gapitMain$Compression[,6]),1)
 colnames(h2)=c("Heritability")
   print("GAPIT accomplished successfully for single trait. Results are saved. GWAS and GPS are returned!")
-  return (list(QTN=gapitMain$QTN,GWAS=gapitMain$GWAS,GPS=gapitMain$GPS,Pred=gapitMain$Pred,compression=as.data.frame(cbind(gapitMain$Compression,h2)), kinship.optimum=gapitMain$kinship.optimum,kinship=gapitMain$kinship,PCA=gapitMain$PC))
+  return (list(QTN=gapitMain$QTN,GWAS=gapitMain$GWAS,GPS=gapitMain$GPS,Pred=gapitMain$Pred,compression=as.data.frame(cbind(gapitMain$Compression,h2)), 
+  kinship.optimum=gapitMain$kinship.optimum,kinship=gapitMain$kinship,PCA=gapitMain$PC,
+    FDR=myPower$FDR,Power=myPower$Power,Power.Alpha=myPower$Power.Alpha,alpha=myPower$alpha))
+
 }else{
   print("GAPIT accomplished successfully for multiple traits. Results are saved")
   return (list(GWAS=NULL,GPS=NULL,Pred=NULL,compression=NULL,kinship.optimum=NULL,kinship=gapitMain$KI,PCA=gapitMain$PC))

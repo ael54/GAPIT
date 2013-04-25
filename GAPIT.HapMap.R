@@ -49,7 +49,7 @@ if(is.null(GD)){
 #print(dim(GD))
 
 
-if(!Create.indicator) print(paste("Succesfuly finished converting HapMap which has bits of ", bit,sep=""))
+if(!Create.indicator) {print(paste("Succesfuly finished converting HapMap which has bits of ", bit,sep="")) }
 return(list(GT=GT,GD=GD,GI=GI))
 }#end of GAPIT.HapMap function
 

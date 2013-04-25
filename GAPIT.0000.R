@@ -9,7 +9,7 @@ function(){
 
 #Designed by Zhiwu Zhang
 #Writen by Alex Lipka, Feng Tian and Zhiwu Zhang
-GAPIT.Version="3.34, April 4, 2013 (Mist)"
+GAPIT.Version="3.35, April 4, 2013 (Label QTN)"
 return(GAPIT.Version)
 }
 

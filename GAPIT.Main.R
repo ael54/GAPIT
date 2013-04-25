@@ -11,7 +11,8 @@ function(Y,G=NULL,GD=NULL,GM=NULL,KI=NULL,Z=NULL,CV=NULL,CV.Inheritance=NULL,SNP
                 genoFormat=NULL,hasGenotype=NULL,byFile=NULL,fullGD=NULL,PC=NULL,GI=NULL, Timmer = NULL, Memory = NULL,
                 sangwich.top=NULL,sangwich.bottom=NULL,QC=TRUE,GTindex=NULL,LD=0.05,
                 file.output=TRUE,cutOff=0.01, Model.selection = FALSE, Create.indicator = FALSE,
-				QTN=NULL, QTN.round=1,QTN.limit=0, QTN.update=TRUE, QTN.method="Penalty", Major.allele.zero = FALSE){
+				QTN=NULL, QTN.round=1,QTN.limit=0, QTN.update=TRUE, QTN.method="Penalty", Major.allele.zero = FALSE,
+        QTN.position=NULL){
 #Object: To perform GWAS and GPS (Genomic Prediction or Selection)
 #Output: GWAS table (text file), QQ plot (PDF), Manhattan plot (PDF), genomic prediction (text file), and
 #        genetic and residual variance components
@@ -295,7 +296,7 @@ if(optOnly | Model.selection){
  colInclude=c(1:ncol(GD))
 }
 
-if(!optOnly) print("Compressing and Genome screening..." )
+if(!optOnly) {print("Compressing and Genome screening..." )}
 count=count+1
 
 #Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="PreP3D 1")
@@ -973,8 +974,13 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="QQ plot")
 
 
   #Manhattan Plots
+  
+  
    print("Manhattan plot (Genomewise)..." )
-  if(file.output) GAPIT.Manhattan(GI.MP = PWIP$PWIP[,2:4], name.of.trait = name.of.trait, DPP=DPP, plot.type = "Genomewise",cutOff=cutOff)
+#  if(file.output) GAPIT.Manhattan(GI.MP = PWIP$PWIP[,2:4], name.of.trait = name.of.trait, DPP=DPP, plot.type = "Genomewise",cutOff=cutOff)
+#  if(file.output) GAPIT.Manhattan(GI.MP = PWIP$PWIP[,2:4], name.of.trait = name.of.trait, DPP=DPP, plot.type = "Genomewise",cutOff=cutOff,seqQTN=QTN.position)  #QTN does not work with sorted P
+  if(file.output) GAPIT.Manhattan(GI.MP = cbind(GI[,-1],ps), name.of.trait = name.of.trait, DPP=DPP, plot.type = "Genomewise",cutOff=cutOff,seqQTN=QTN.position) 
+
  print("Manhattan plot (Chromosomewise)..." )
   if(file.output) GAPIT.Manhattan(GI.MP = PWIP$PWIP[,2:4], name.of.trait = name.of.trait, DPP=DPP, plot.type = "Chromosomewise",cutOff=cutOff)
 
@@ -990,7 +996,7 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="Manhattan plot")
         DTS=cbind(GI,df,tvalue,stderr)
         colnames(DTS)=c("SNP","Chromosome","Position","DF","t Value","std Error")		
   print("Creating ROC table and plot" )
-	myROC=GAPIT.ROC(t=tvalue,se=stderr,Vp=var(ys),trait=name.of.trait)
+	if(file.output) myROC=GAPIT.ROC(t=tvalue,se=stderr,Vp=var(ys),trait=name.of.trait)
   print("ROC table and plot created" )
 
   if(file.output){

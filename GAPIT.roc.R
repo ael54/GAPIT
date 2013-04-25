@@ -8,6 +8,15 @@ function(t=NULL,se=NULL,Vp=1,trait=""){
 #Authors: Zhiwu Zhang
 # Last update: Feb 11, 2013 
 ##############################################################################################
+#print("GAPIT.ROC start")
+#print("Length of t se and Vp")
+#print(length(t))
+#print(length(se))
+#print((Vp))
+if(length(t)==length(t[is.na(t)]) ){
+#print("NA t, No ROC plot")
+return(NULL)
+}
 
 #test
 #n=1000
@@ -69,16 +78,19 @@ write.table(power,file=paste("GAPIT.",trait,".ROC.csv",sep=""),quote = TRUE, sep
 
 palette(c("black","red","blue","brown", "orange","cyan", "green",rainbow(nc)))
 
-pdf(paste("GAPIT.", trait,".ROC.pdf" ,sep = ""), width = 8,height=8) 
-par(mar = c(5,5,5,5))
+pdf(paste("GAPIT.", trait,".ROC.pdf" ,sep = ""), width = 5,height=5) 
+par(mar = c(5,6,5,3))
+
+
   
-plot(FDR,power[,1],type="o",lwd=2,col=1,xlab="Type I error",ylab="Power")
+plot(FDR,power[,1],type="o",lwd=2,col=1,xlab="Type I error",ylab="Power",main = trait,cex.axis=1.1, cex.lab=1.3)
 for(i in 2:nc){
 lines(power[,i]~FDR, lwd=2,type="o",pch=i,col=i)
 }
 legend("bottomright", colnames(power), pch = c(1:nc), lty = c(1,2),col=c(1:nc))
 
 dev.off()
+print("ROC completed!")
 
 }   #GAPIT.ROC ends here
 

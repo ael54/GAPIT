@@ -8,8 +8,8 @@ function(P.values, plot.type = "log_P_values", name.of.trait = "Trait",DPP=50000
 ##############################################################################################
 
 # Sort the data by the raw P-values
-print("Sorting p values")
-print(paste("Number of P values: ",length(P.values)))
+#print("Sorting p values")
+#print(paste("Number of P values: ",length(P.values)))
 #remove NAs and keep the ones between between 0 and 1
 P.values=P.values[!is.na(P.values)]
 P.values=P.values[P.values>0]
@@ -21,7 +21,7 @@ DPP=round(DPP/4) #Reduce to 1/4 for QQ plot
 P.values <- P.values[order(P.values)]
   
 #Set up the p-value quantiles
-print("Setting p_value_quantiles...")
+#print("Setting p_value_quantiles...")
 p_value_quantiles <- (1:length(P.values))/(length(P.values)+1)
 
 
@@ -35,7 +35,9 @@ if(plot.type == "log_P_values")
     log.Quantiles=log.Quantiles[index]
 
     pdf(paste("GAPIT.", name.of.trait,".QQ-Plot.pdf" ,sep = ""),width = 5,height=5)
-    par(mar = c(5,6,5,3))
+par(mar = c(5,6,5,3))
+
+
 
     #Add conficence interval
     N1=length(log.Quantiles)
@@ -66,8 +68,8 @@ if(plot.type == "log_P_values")
     #data
     par(new=T)
     plot(log.Quantiles, log.P.values, xlim = c(0,max(log.Quantiles)), ylim = c(0,max(log.P.values)),
-           cex.axis=1.5, cex.lab=2, lty = 1,  lwd = 2, col = "Blue" ,xlab =expression(Expected~~-log[10](italic(p))),
-           ylab = expression(Observed~~-log[10](italic(p))), main = paste(name.of.trait,sep=""),cex.lab=1.6)
+           cex.axis=1.1, cex.lab=1.3, lty = 1,  lwd = 2, col = "Blue" ,xlab =expression(Expected~~-log[10](italic(p))),
+           ylab = expression(Observed~~-log[10](italic(p))), main = paste(name.of.trait,sep=""))
 
 
     
