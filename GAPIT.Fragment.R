@@ -56,7 +56,7 @@ if(genoFormat=="hapmap"){
           #print("Number of SNP in this pragment:")
           #print(n)
           
-           set.seed(seed+(file*1000)+frag)
+          #set.seed(seed+(file*1000)+frag)
           #mySample=sample(1:n,max(2,floor(n*as.numeric(as.vector(SNP.fraction)))))
           mySample=sample(1:n,max(2,floor(n*SNP.fraction)))
           
@@ -131,7 +131,7 @@ if(genoFormat=="EMMA"){
         
         if(SNP.fraction<1){
           n= ncol(GD)
-          set.seed(seed+file)
+          #set.seed(seed+file)
           sample=sample(1:n,floor(n*SNP.fraction))
           return(list(GD=GD[,sample], GI=GI[sample,],GT=GT,linesRead=linesRead,GLD=NULL))
         }

@@ -146,7 +146,7 @@ print("-------------------Sandwich top bun-----------------------------------")
 
 #Create GK if not provided
   if(is.null(GK)){
-    set.seed(1)
+#    set.seed(1)
     nY=floor(nrow(Y)*.9)
     nG=ncol(GD)
     if(nG>nY){snpsam=sample(1:nG,nY)}else{snpsam=1:nG}
@@ -872,7 +872,11 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="Extract p3d results")
   maf=myBread$GWAS[,5]*0+.5
   rsquare_base=rep(NA,length(ps))
   rsquare=rep(NA,length(ps))
-
+  df=rep(NA,length(nobs))
+  tvalue=rep(NA,length(nobs))
+  stderr=rep(NA,length(nobs))
+  effect.est=rep(NA,length(nobs))
+  
 Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Extract bread results")
 Memory=GAPIT.Memory(Memory=Memory,Infor="Extract bread results")
  
@@ -993,15 +997,17 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="Manhattan plot")
   #GAPIT.Table(final.table = PWIP$PWIP, name.of.trait = name.of.trait,SNP.FDR=SNP.FDR)
   GWAS=PWIP$PWIP[PWIP$PWIP[,9]<=SNP.FDR,]
   print("Joining tvalue and stderr" )
+  
         DTS=cbind(GI,df,tvalue,stderr)
-        colnames(DTS)=c("SNP","Chromosome","Position","DF","t Value","std Error")		
+        colnames(DTS)=c("SNP","Chromosome","Position","DF","t Value","std Error")	
+
   print("Creating ROC table and plot" )
 	if(file.output) myROC=GAPIT.ROC(t=tvalue,se=stderr,Vp=var(ys),trait=name.of.trait)
   print("ROC table and plot created" )
 
   if(file.output){
    write.table(GWAS, paste("GAPIT.", name.of.trait, ".GWAS.Results.csv", sep = ""), quote = FALSE, sep = ",", row.names = FALSE,col.names = TRUE)
-          write.table(DTS, paste("GAPIT.", name.of.trait, ".Df.tValue.StdErr.csv", sep = ""), quote = FALSE, sep = ",", row.names = FALSE,col.names = TRUE)
+   write.table(DTS, paste("GAPIT.", name.of.trait, ".Df.tValue.StdErr.csv", sep = ""), quote = FALSE, sep = ",", row.names = FALSE,col.names = TRUE)
    if(!byPass) write.table(GWAS.2, paste("GAPIT.", name.of.trait, ".Allelic_Effect_Estimates.csv", sep = ""), quote = FALSE, sep = ",", row.names = FALSE,col.names = TRUE)
   }
 

@@ -5,6 +5,14 @@ function(ys, xs, vg, delta, Z = NULL, X0 = NULL, snp.pool=NULL,LD=0.01,method="F
 #Authors: Qishan Wang, Feng Tian and Zhiwu Zhang
 #Last update: April 16, 2012
 ################################################################################
+#print("GAPIT.SUPER.FastMLM started")
+#print("dimension of ys,xs,X0 and snp.pool")
+#print(length(ys))
+#print(dim(xs))
+#print(dim(X0))
+#print(dim(snp.pool))
+#print((LD))
+
 
 #Set data to the require format
 ys=unlist(ys)
@@ -28,7 +36,8 @@ betavalue <- matrix(nrow = m, ncol = g)
 ####################
 if(method=="SUPER"){
  LDsqr=sqrt(LD)  
-##################   
+##################  
+ 
 #Iteration on trait (j) and SNP (i)
 for(j in 1:g)
 {
@@ -50,7 +59,12 @@ for (i in 1:m)
   {
       #SUPER
       snp.corr=cor(xs[,i],snp.pool)
-      index.k= snp.corr<=LDsqr
+      index.k=which( abs(snp.corr)<=LDsqr )
+      #handler of snp correlated with all QTNs
+      if(length(index.k)<2){
+       index.k=1:length(snp.corr) #keep going to have them all
+       #print("warning: there is a snp correlated with all QTNs")
+      }   
       K.X= snp.pool[,index.k]
       ####################
       K.X.svd= svd(K.X) ###start 2012.4.16 by qishan
@@ -63,6 +77,8 @@ for (i in 1:m)
        U1=U1[,1:length(d)]  ### end 2012.4.16 by qishan
  
        n<-nrow(U1)
+
+      
        I= diag(1,nrow(U1))
       
       ################ get iXX
@@ -161,7 +177,8 @@ if(method=="FaST"){
        n<-nrow(U1)
        I= diag(1,nrow(U1))
    U <- U1*matrix(sqrt(1/(d + delta)), nrow(U1), length(d), byrow = TRUE) 
-##################   
+################## 
+ 
 #Iteration on trait (j) and SNP (i)
 for(j in 1:g)
 {
