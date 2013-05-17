@@ -1,6 +1,7 @@
 `GAPIT.Bread` <-
 function(Y=NULL,CV=NULL,Z=NULL,KI=NULL,GK=NULL,GD=NULL,GM=NULL,
-              method=NULL,delta=NULL,vg=NULL,ve=NULL,LD=0.01,GTindex=NULL){
+              method=NULL,delta=NULL,vg=NULL,ve=NULL,LD=0.01,GTindex=NULL,
+              file.output=TRUE){
 #Object: To calculate p-values of SNPs by using method of GLM, MLM, CMLM, FaST, SUPER and DC  
 #Straitegy: NA
 #Output: GWAS, GPS,REMLs,vg,ve,delta
@@ -30,7 +31,8 @@ if(method=="GLM"){
   group.from=0,			
   group.to=0,
   QC=FALSE,
-  GTindex=GTindex				
+  GTindex=GTindex,
+  file.output=file.output				
   )
   GWAS=myGAPIT$GWAS 
   GPS=myGAPIT$GPS 
@@ -54,7 +56,8 @@ if(method=="MLM"){
   group.from=nrow(Y),			
   group.to=nrow(Y),
   QC=FALSE,
-  GTindex=GTindex				
+  GTindex=GTindex,
+  file.output=file.output				
   )
   GWAS=myGAPIT$GWAS 
   GPS=myGAPIT$GPS 
@@ -77,7 +80,8 @@ if(method=="CMLM"){
   group.from=1,			
   group.to=nrow(Y),
   QC=FALSE,
-  GTindex=GTindex				
+  GTindex=GTindex,
+  file.output=file.output				
   )
   GWAS=myGAPIT$GWAS 
   GPS=myGAPIT$GPS 

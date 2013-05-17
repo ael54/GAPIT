@@ -158,7 +158,7 @@ print("-------------------Sandwich top bun-----------------------------------")
   }
   
   #myGD=cbind(as.data.frame(GT),as.data.frame(GD)) 
-  GP=GAPIT.Bread(Y=Y,CV=CV,Z=Z,KI=KI,GK=GK,GD=cbind(as.data.frame(GT),as.data.frame(GD)),GM=GI,method=sangwich.top,GTindex=GTindex,LD=LD)$GWAS
+  GP=GAPIT.Bread(Y=Y,CV=CV,Z=Z,KI=KI,GK=GK,GD=cbind(as.data.frame(GT),as.data.frame(GD)),GM=GI,method=sangwich.top,GTindex=GTindex,LD=LD,file.output=file.output)$GWAS
   GK=NULL
   
 print("-------------------Sagnwich top bun: done-----------------------------")  
@@ -671,7 +671,7 @@ print("---------------Sandwich bottom: reload bins ---------------------------")
 
 #SUPER: Final screening
   GK=GK.save
-  myBread=GAPIT.Bread(Y=Y,CV=CV,Z=Z,GK=GK,GD=cbind(as.data.frame(GT),as.data.frame(GD)),GM=GI,method=sangwich.bottom,GTindex=GTindex,LD=LD)
+  myBread=GAPIT.Bread(Y=Y,CV=CV,Z=Z,GK=GK,GD=cbind(as.data.frame(GT),as.data.frame(GD)),GM=GI,method=sangwich.bottom,GTindex=GTindex,LD=LD,file.output=file.output)
               
   print("SUPER saving results...")
 
